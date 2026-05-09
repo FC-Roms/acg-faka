@@ -15,6 +15,7 @@ use App\Interceptor\Waf;
 use App\Service\Query;
 use App\Util\Date;
 use App\Util\Str;
+use Illuminate\Database\Capsule\Manager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Kernel\Annotation\Inject;
@@ -65,6 +66,7 @@ class Coupon extends User
         $num = (int)$_POST['num']; //生成数量
         $life = (int)$_POST['life']; //可用次数
         $mode = (int)$_POST['mode']; //抵扣模式
+        $userLimit = (int)($_POST['user_limit'] ?? 0); //使用人群限制
         $categoryId = (int)$_POST['category_id']; //分类ID
 
         $raceGetMode = (int)$_POST['race_get_mode'];
@@ -83,6 +85,14 @@ class Coupon extends User
 
         if ($num <= 0) {
             throw new JSONException("ಠ_ಠ最少也要生成1张优惠券");
+        }
+
+        if (!in_array($userLimit, [0, 1], true)) {
+            throw new JSONException("优惠券使用人群设置错误");
+        }
+        $hasUserLimitColumn = Manager::schema()->hasColumn("coupon", "user_limit");
+        if ($userLimit === 1 && !$hasUserLimitColumn) {
+            throw new JSONException("请先执行优惠券新用户限制数据库补丁");
         }
 
 
@@ -114,6 +124,9 @@ class Coupon extends User
             $voucher->note = $note;
             $voucher->life = $life;
             $voucher->mode = $mode;
+            if ($hasUserLimitColumn) {
+                $voucher->user_limit = $userLimit;
+            }
             $voucher->sku = $sku;
             if ($race) {
                 $voucher->race = $race;

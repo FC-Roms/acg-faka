@@ -127,11 +127,12 @@ class Order implements \App\Service\Order
      * @param int|null $cardId
      * @param string|null $coupon
      * @param UserGroup|null $group
+     * @param User|null $user
      * @return string
      * @throws JSONException
      * @throws \ReflectionException
      */
-    public function valuation(Commodity|int $commodity, int $num = 1, ?string $race = null, ?array $sku = [], ?int $cardId = null, ?string $coupon = null, ?UserGroup $group = null): string
+    public function valuation(Commodity|int $commodity, int $num = 1, ?string $race = null, ?array $sku = [], ?int $cardId = null, ?string $coupon = null, ?UserGroup $group = null, ?User $user = null): string
     {
         if (is_int($commodity)) {
             $commodity = Commodity::query()->find($commodity);
@@ -267,6 +268,8 @@ class Order implements \App\Service\Order
                 throw new JSONException("该优惠券不存在");
             }
 
+            $this->validateCouponUserLimit($voucher, $commodity, $user);
+
             if ($voucher->commodity_id != 0 && $voucher->commodity_id != $commodity->id) {
                 throw new JSONException("该优惠券不属于该商品");
             }
@@ -318,6 +321,37 @@ class Order implements \App\Service\Order
 
         //返回单价
         return $price->mul($num)->getAmount();
+    }
+
+    /**
+     * 校验优惠券是否仅限绑定联系方式的新用户使用。
+     * 新用户按当前店铺口径计算：该会员未在当前商品所属店铺完成过支付订单。
+     * @throws JSONException
+     */
+    private function validateCouponUserLimit(Coupon $coupon, Commodity $commodity, ?User $user): void
+    {
+        if ((int)($coupon->user_limit ?? 0) !== 1) {
+            return;
+        }
+
+        if (!$user) {
+            throw new JSONException("该优惠券仅限登录后绑定邮箱或手机号的新用户使用");
+        }
+
+        $email = trim((string)($user->email ?? ""));
+        $phone = trim((string)($user->phone ?? ""));
+        if ($email === "" && $phone === "") {
+            throw new JSONException("请先绑定邮箱或手机号后再使用该优惠券");
+        }
+
+        $hasPaidOrder = \App\Model\Order::query()
+            ->where("owner", $user->id)
+            ->where("user_id", $commodity->owner)
+            ->where("status", 1)
+            ->exists();
+        if ($hasPaidOrder) {
+            throw new JSONException("该优惠券仅限本店新用户使用");
+        }
     }
 
 
@@ -627,7 +661,7 @@ class Order implements \App\Service\Order
         }
 
         //计算订单价格
-        $amount = $this->valuation($commodity, $num, $race, $sku, $cardId, $coupon, $userGroup);
+        $amount = $this->valuation($commodity, $num, $race, $sku, $cardId, $coupon, $userGroup, $user);
         $rent == 0 && $rent = $this->getCost($commodity, $num, $race, $sku, $cardId);
         $rebate = 0;
         $divideAmount = 0;
@@ -645,7 +679,7 @@ class Order implements \App\Service\Order
                 $amount = $shopService->getSubstationPrice($commodity, $amount);
                 $_userGroup = UserGroup::get($_user->recharge);
                 //分站拿到的具体金额
-                $rebate = (new Decimal($amount))->sub($this->valuation($commodity, $num, $race, $sku, $cardId, $coupon, $_userGroup))->getAmount();
+                $rebate = (new Decimal($amount))->sub($this->valuation($commodity, $num, $race, $sku, $cardId, $coupon, $_userGroup, $user))->getAmount();
             }
         } else {
             //主站卖分站的东西
@@ -662,7 +696,7 @@ class Order implements \App\Service\Order
             $x_user = User::query()->find($from);
             $x_userGroup = UserGroup::get($x_user->recharge);
             //推广者具体拿到的金额，计算方法：订单总金额 - 拿货价 = 具体金额
-            $x_amount = $this->valuation($commodity, $num, $race, $sku, $cardId, $coupon, $x_userGroup);
+            $x_amount = $this->valuation($commodity, $num, $race, $sku, $cardId, $coupon, $x_userGroup, $user);
             //先判定该订单是否分站或主站
             if ($rebate > 0) {
                 $x_amount = $shopService->getSubstationPrice($commodity, $x_amount);
@@ -748,6 +782,7 @@ class Order implements \App\Service\Order
                 if ($voucher->status != 0) {
                     throw new JSONException("该优惠券已失效");
                 }
+                $this->validateCouponUserLimit($voucher, $commodity, $user);
                 $voucher->service_time = $date;
                 $voucher->use_life = $voucher->use_life + 1;
                 $voucher->life = $voucher->life - 1;
@@ -1241,6 +1276,7 @@ class Order implements \App\Service\Order
                 throw new JSONException("该优惠券不存在");
             }
 
+            $this->validateCouponUserLimit($voucher, $commodity, $user);
 
             if ($voucher->commodity_id != 0 && $voucher->commodity_id != $commodity->id) {
                 throw new JSONException("该优惠券不属于该商品");

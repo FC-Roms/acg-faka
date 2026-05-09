@@ -29,6 +29,10 @@ class Hook
             mkdir($path, 0777, true);
         }
 
+        if (!file_exists(Hook::CACHE_FILE)) {
+            touch(Hook::CACHE_FILE);
+        }
+
         if (!is_writable(Hook::CACHE_FILE)) {
             return;
         }

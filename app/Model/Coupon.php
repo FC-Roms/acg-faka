@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $life
  * @property int $use_life
  * @property int $mode
+ * @property int $user_limit
  * @property int $category_id
  * @property string $race
  * @property array $sku
@@ -40,7 +41,7 @@ class Coupon extends Model
     /**
      * @var array
      */
-    protected $casts = ['commodity_id' => 'integer', 'id' => 'integer', 'category_id' => 'integer', 'mode' => 'integer', 'money' => 'float', 'owner' => 'integer', 'status' => 'integer', 'life' => 'integer', 'use_life' => 'integer', 'sku' => 'json'];
+    protected $casts = ['commodity_id' => 'integer', 'id' => 'integer', 'category_id' => 'integer', 'mode' => 'integer', 'user_limit' => 'integer', 'money' => 'float', 'owner' => 'integer', 'status' => 'integer', 'life' => 'integer', 'use_life' => 'integer', 'sku' => 'json'];
 
     public function owner(): ?\Illuminate\Database\Eloquent\Relations\HasOne
     {

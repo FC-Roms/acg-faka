@@ -57,6 +57,10 @@ const _Dict = new class _Dict extends _DictUtil {
                 {id: 0, "name": format.badge("金额", "a-badge-success")},
                 {id: 1, "name": format.badge("百分比", "a-badge-primary")},
             ],
+            "_coupon_user_limit": [
+                {id: 0, "name": format.badge("不限", "a-badge-success")},
+                {id: 1, "name": format.badge("新客绑定邮箱/手机", "a-badge-warning")},
+            ],
             "_order_status": [
                 {id: 1, "name": format.badge("已支付", "a-badge-success")},
                 {id: 0, "name": format.badge("未支付", "a-badge-danger")},

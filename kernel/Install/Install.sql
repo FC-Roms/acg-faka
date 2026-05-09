@@ -1,8 +1,8 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
-DROP TABLE IF EXISTS `__PREFIX__bill`;
-CREATE TABLE `__PREFIX__bill`  (
+DROP TABLE IF EXISTS `acg_bill`;
+CREATE TABLE `acg_bill`  (
                                    `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                    `owner` int UNSIGNED NOT NULL COMMENT '用户id',
                                    `amount` decimal(10, 2) UNSIGNED NOT NULL COMMENT '金额',
@@ -14,11 +14,11 @@ CREATE TABLE `__PREFIX__bill`  (
                                    PRIMARY KEY (`id`) USING BTREE,
                                    INDEX `owner`(`owner` ASC) USING BTREE,
                                    INDEX `type`(`type` ASC) USING BTREE,
-                                   CONSTRAINT `__PREFIX__bill_ibfk_1` FOREIGN KEY (`owner`) REFERENCES `__PREFIX__user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                                   CONSTRAINT `acg_bill_ibfk_1` FOREIGN KEY (`owner`) REFERENCES `acg_user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
-DROP TABLE IF EXISTS `__PREFIX__business`;
-CREATE TABLE `__PREFIX__business`  (
+DROP TABLE IF EXISTS `acg_business`;
+CREATE TABLE `acg_business`  (
                                        `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                        `user_id` int UNSIGNED NOT NULL COMMENT '用户id',
                                        `shop_name` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '店铺名称',
@@ -37,8 +37,8 @@ CREATE TABLE `__PREFIX__business`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 
-DROP TABLE IF EXISTS `__PREFIX__business_level`;
-CREATE TABLE `__PREFIX__business_level`  (
+DROP TABLE IF EXISTS `acg_business_level`;
+CREATE TABLE `acg_business_level`  (
                                              `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                              `name` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '等级名称',
                                              `icon` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '图标',
@@ -52,12 +52,12 @@ CREATE TABLE `__PREFIX__business_level`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 
-INSERT INTO `__PREFIX__business_level` VALUES (1, '体验版', '/assets/static/images/business/v1.png', 0.30, 0.10, 1, 0, 188.00, 1);
-INSERT INTO `__PREFIX__business_level` VALUES (3, '普通版', '/assets/static/images/business/v2.png', 0.25, 0.15, 1, 0, 288.00, 1);
-INSERT INTO `__PREFIX__business_level` VALUES (4, '专业版', '/assets/static/images/business/v3.png', 0.20, 0.20, 1, 1, 388.00, 1);
+INSERT INTO `acg_business_level` VALUES (1, '体验版', '/assets/static/images/business/v1.png', 0.30, 0.10, 1, 0, 188.00, 1);
+INSERT INTO `acg_business_level` VALUES (3, '普通版', '/assets/static/images/business/v2.png', 0.25, 0.15, 1, 0, 288.00, 1);
+INSERT INTO `acg_business_level` VALUES (4, '专业版', '/assets/static/images/business/v3.png', 0.20, 0.20, 1, 1, 388.00, 1);
 
-DROP TABLE IF EXISTS `__PREFIX__card`;
-CREATE TABLE `__PREFIX__card`  (
+DROP TABLE IF EXISTS `acg_card`;
+CREATE TABLE `acg_card`  (
                                    `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                    `owner` int UNSIGNED NOT NULL DEFAULT 0 COMMENT '所属会员：0=系统，其他等于会员UID',
                                    `commodity_id` int UNSIGNED NOT NULL COMMENT '商品id',
@@ -80,12 +80,12 @@ CREATE TABLE `__PREFIX__card`  (
                                    INDEX `status`(`status` ASC) USING BTREE,
                                    INDEX `note`(`note` ASC) USING BTREE,
                                    INDEX `race`(`race` ASC) USING BTREE,
-                                   CONSTRAINT `__PREFIX__card_ibfk_1` FOREIGN KEY (`commodity_id`) REFERENCES `__PREFIX__commodity` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                                   CONSTRAINT `acg_card_ibfk_1` FOREIGN KEY (`commodity_id`) REFERENCES `acg_commodity` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 
-DROP TABLE IF EXISTS `__PREFIX__cash`;
-CREATE TABLE `__PREFIX__cash`  (
+DROP TABLE IF EXISTS `acg_cash`;
+CREATE TABLE `acg_cash`  (
                                    `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                    `user_id` int UNSIGNED NOT NULL COMMENT '用户id',
                                    `amount` decimal(14, 2) UNSIGNED NOT NULL COMMENT '提现金额',
@@ -100,12 +100,12 @@ CREATE TABLE `__PREFIX__cash`  (
                                    INDEX `user_id`(`user_id` ASC) USING BTREE,
                                    INDEX `type`(`type` ASC) USING BTREE,
                                    INDEX `message`(`message` ASC) USING BTREE,
-                                   CONSTRAINT `__PREFIX__cash_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `__PREFIX__user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                                   CONSTRAINT `acg_cash_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `acg_user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 
-DROP TABLE IF EXISTS `__PREFIX__category`;
-CREATE TABLE `__PREFIX__category`  (
+DROP TABLE IF EXISTS `acg_category`;
+CREATE TABLE `acg_category`  (
                                        `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                        `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '商品分类名称',
                                        `sort` smallint UNSIGNED NOT NULL DEFAULT 0 COMMENT '排序',
@@ -120,15 +120,15 @@ CREATE TABLE `__PREFIX__category`  (
                                        INDEX `owner`(`owner` ASC) USING BTREE,
                                        INDEX `idx_category_pid`(`pid`) USING BTREE,
                                        INDEX `sort`(`sort` ASC) USING BTREE,
-                                       CONSTRAINT `ibfk_category_pid_in_id` FOREIGN KEY (`pid`) REFERENCES `__PREFIX__category`(`id`) ON DELETE CASCADE
+                                       CONSTRAINT `ibfk_category_pid_in_id` FOREIGN KEY (`pid`) REFERENCES `acg_category`(`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = DYNAMIC;
 
 
-INSERT INTO `__PREFIX__category` VALUES (1, 'DEMO', 1, '2021-11-26 17:59:45', 0, '/favicon.ico', 1, 0, NULL , NULL);
+INSERT INTO `acg_category` VALUES (1, 'DEMO', 1, '2021-11-26 17:59:45', 0, '/favicon.ico', 1, 0, NULL , NULL);
 
 
-DROP TABLE IF EXISTS `__PREFIX__commodity`;
-CREATE TABLE `__PREFIX__commodity`  (
+DROP TABLE IF EXISTS `acg_commodity`;
+CREATE TABLE `acg_commodity`  (
                                         `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                         `category_id` int UNSIGNED NOT NULL COMMENT '商品分类ID',
                                         `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '商品名称',
@@ -189,12 +189,12 @@ CREATE TABLE `__PREFIX__commodity`  (
                                         INDEX `recommend`(`recommend` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = DYNAMIC;
 
-INSERT INTO `__PREFIX__commodity` VALUES (1, 1, 'DEMO', '<p>该商品是演示商品</p>', '/favicon.ico', 0.00, 1.00, 0.90, 1, 0, '2021-11-26 18:01:30', 1, '8AE80574F3CA98BE', 1, 0, '', 0, 0, 1, 1, NULL, '', 0.00 , NULL,999999, 0, 0, NULL, NULL, 0, 0.00, 0, NULL, 0, 0, 0, 0, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0 ,0 ,0);
+INSERT INTO `acg_commodity` VALUES (1, 1, 'DEMO', '<p>该商品是演示商品</p>', '/favicon.ico', 0.00, 1.00, 0.90, 1, 0, '2021-11-26 18:01:30', 1, '8AE80574F3CA98BE', 1, 0, '', 0, 0, 1, 1, NULL, '', 0.00 , NULL,999999, 0, 0, NULL, NULL, 0, 0.00, 0, NULL, 0, 0, 0, 0, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0 ,0 ,0);
 
 
 
-DROP TABLE IF EXISTS `__PREFIX__config`;
-CREATE TABLE `__PREFIX__config`  (
+DROP TABLE IF EXISTS `acg_config`;
+CREATE TABLE `acg_config`  (
                                      `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
                                      `key` varchar(128) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '配置键名称',
                                      `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '配置内容',
@@ -203,57 +203,57 @@ CREATE TABLE `__PREFIX__config`  (
 ) ENGINE = MyISAM AUTO_INCREMENT = 45 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = DYNAMIC;
 
 
-INSERT INTO `__PREFIX__config` VALUES (1, 'shop_name', '异次元店铺');
-INSERT INTO `__PREFIX__config` VALUES (2, 'title', '异次元店铺 - 最适合你的个人店铺系统！');
-INSERT INTO `__PREFIX__config` VALUES (3, 'description', '');
-INSERT INTO `__PREFIX__config` VALUES (4, 'keywords', '');
-INSERT INTO `__PREFIX__config` VALUES (14, 'user_theme', 'Cartoon');
-INSERT INTO `__PREFIX__config` VALUES (5, 'registered_state', '1');
-INSERT INTO `__PREFIX__config` VALUES (6, 'registered_type', '0');
-INSERT INTO `__PREFIX__config` VALUES (7, 'registered_verification', '1');
-INSERT INTO `__PREFIX__config` VALUES (8, 'registered_phone_verification', '0');
-INSERT INTO `__PREFIX__config` VALUES (9, 'registered_email_verification', '0');
-INSERT INTO `__PREFIX__config` VALUES (10, 'sms_config', '{\"accessKeyId\":\"\",\"accessKeySecret\":\"\",\"signName\":\"\",\"templateCode\":\"\"}');
-INSERT INTO `__PREFIX__config` VALUES (11, 'email_config', '{\"smtp\":\"\",\"port\":\"\",\"username\":\"\",\"password\":\"\"}');
-INSERT INTO `__PREFIX__config` VALUES (12, 'login_verification', '1');
-INSERT INTO `__PREFIX__config` VALUES (13, 'forget_type', '0');
-INSERT INTO `__PREFIX__config` VALUES (15, 'notice', '<p><b><font color=\"#f9963b\">本程序为开源程序，使用者造成的一切法律后果与作者无关。</font></b></p>');
-INSERT INTO `__PREFIX__config` VALUES (16, 'trade_verification', '1');
-INSERT INTO `__PREFIX__config` VALUES (17, 'recharge_welfare', '0');
-INSERT INTO `__PREFIX__config` VALUES (18, 'recharge_welfare_config', '');
-INSERT INTO `__PREFIX__config` VALUES (19, 'promote_rebate_v1', '0.1');
-INSERT INTO `__PREFIX__config` VALUES (20, 'promote_rebate_v2', '0.2');
-INSERT INTO `__PREFIX__config` VALUES (21, 'promote_rebate_v3', '0.3');
-INSERT INTO `__PREFIX__config` VALUES (22, 'substation_display', '1');
-INSERT INTO `__PREFIX__config` VALUES (24, 'domain', '');
-INSERT INTO `__PREFIX__config` VALUES (25, 'service_qq', '');
-INSERT INTO `__PREFIX__config` VALUES (26, 'service_url', '');
-INSERT INTO `__PREFIX__config` VALUES (27, 'cash_type_alipay', '1');
-INSERT INTO `__PREFIX__config` VALUES (28, 'cash_type_wechat', '1');
-INSERT INTO `__PREFIX__config` VALUES (29, 'cash_cost', '5');
-INSERT INTO `__PREFIX__config` VALUES (30, 'cash_min', '100');
-INSERT INTO `__PREFIX__config` VALUES (31, 'cname', '');
-INSERT INTO `__PREFIX__config` VALUES (32, 'background_url', '/assets/admin/images/login/bg.jpg');
-INSERT INTO `__PREFIX__config` VALUES (33, 'default_category', '0');
-INSERT INTO `__PREFIX__config` VALUES (34, 'substation_display_list', '[]');
-INSERT INTO `__PREFIX__config` VALUES (35, 'closed', '0');
-INSERT INTO `__PREFIX__config` VALUES (36, 'closed_message', '我们正在升级，请耐心等待完成。');
-INSERT INTO `__PREFIX__config` VALUES (37, 'recharge_min', '10');
-INSERT INTO `__PREFIX__config` VALUES (38, 'recharge_max', '1000');
-INSERT INTO `__PREFIX__config` VALUES (39, 'user_mobile_theme', '0');
-INSERT INTO `__PREFIX__config` VALUES (40, 'commodity_recommend', '0');
-INSERT INTO `__PREFIX__config` VALUES (41, 'commodity_name', '推荐');
-INSERT INTO `__PREFIX__config` VALUES (42, 'background_mobile_url', '');
-INSERT INTO `__PREFIX__config` VALUES (43, 'username_len', '6');
-INSERT INTO `__PREFIX__config` VALUES (44, 'cash_type_balance', '0');
-INSERT INTO `__PREFIX__config` VALUES (45, 'callback_domain', '');
-INSERT INTO `__PREFIX__config` VALUES (46, 'session_expire', '0');
-INSERT INTO `__PREFIX__config` VALUES (47, 'cash_type_usdt', '1');
-INSERT INTO `__PREFIX__config` VALUES (48, 'user_center_theme', 'MountFuji');
+INSERT INTO `acg_config` VALUES (1, 'shop_name', '极智铺');
+INSERT INTO `acg_config` VALUES (2, 'title', '极智铺 - 最适合你的个人店铺系统！');
+INSERT INTO `acg_config` VALUES (3, 'description', '');
+INSERT INTO `acg_config` VALUES (4, 'keywords', '');
+INSERT INTO `acg_config` VALUES (14, 'user_theme', 'Cartoon');
+INSERT INTO `acg_config` VALUES (5, 'registered_state', '1');
+INSERT INTO `acg_config` VALUES (6, 'registered_type', '0');
+INSERT INTO `acg_config` VALUES (7, 'registered_verification', '1');
+INSERT INTO `acg_config` VALUES (8, 'registered_phone_verification', '0');
+INSERT INTO `acg_config` VALUES (9, 'registered_email_verification', '0');
+INSERT INTO `acg_config` VALUES (10, 'sms_config', '{\"accessKeyId\":\"\",\"accessKeySecret\":\"\",\"signName\":\"\",\"templateCode\":\"\"}');
+INSERT INTO `acg_config` VALUES (11, 'email_config', '{\"smtp\":\"\",\"port\":\"\",\"username\":\"\",\"password\":\"\"}');
+INSERT INTO `acg_config` VALUES (12, 'login_verification', '1');
+INSERT INTO `acg_config` VALUES (13, 'forget_type', '0');
+INSERT INTO `acg_config` VALUES (15, 'notice', '<p><b><font color=\"#f9963b\">本程序为开源程序，使用者造成的一切法律后果与作者无关。</font></b></p>');
+INSERT INTO `acg_config` VALUES (16, 'trade_verification', '1');
+INSERT INTO `acg_config` VALUES (17, 'recharge_welfare', '0');
+INSERT INTO `acg_config` VALUES (18, 'recharge_welfare_config', '');
+INSERT INTO `acg_config` VALUES (19, 'promote_rebate_v1', '0.1');
+INSERT INTO `acg_config` VALUES (20, 'promote_rebate_v2', '0.2');
+INSERT INTO `acg_config` VALUES (21, 'promote_rebate_v3', '0.3');
+INSERT INTO `acg_config` VALUES (22, 'substation_display', '1');
+INSERT INTO `acg_config` VALUES (24, 'domain', '');
+INSERT INTO `acg_config` VALUES (25, 'service_qq', '');
+INSERT INTO `acg_config` VALUES (26, 'service_url', '');
+INSERT INTO `acg_config` VALUES (27, 'cash_type_alipay', '1');
+INSERT INTO `acg_config` VALUES (28, 'cash_type_wechat', '1');
+INSERT INTO `acg_config` VALUES (29, 'cash_cost', '5');
+INSERT INTO `acg_config` VALUES (30, 'cash_min', '100');
+INSERT INTO `acg_config` VALUES (31, 'cname', '');
+INSERT INTO `acg_config` VALUES (32, 'background_url', '/assets/admin/images/login/bg.jpg');
+INSERT INTO `acg_config` VALUES (33, 'default_category', '0');
+INSERT INTO `acg_config` VALUES (34, 'substation_display_list', '[]');
+INSERT INTO `acg_config` VALUES (35, 'closed', '0');
+INSERT INTO `acg_config` VALUES (36, 'closed_message', '我们正在升级，请耐心等待完成。');
+INSERT INTO `acg_config` VALUES (37, 'recharge_min', '10');
+INSERT INTO `acg_config` VALUES (38, 'recharge_max', '1000');
+INSERT INTO `acg_config` VALUES (39, 'user_mobile_theme', '0');
+INSERT INTO `acg_config` VALUES (40, 'commodity_recommend', '0');
+INSERT INTO `acg_config` VALUES (41, 'commodity_name', '推荐');
+INSERT INTO `acg_config` VALUES (42, 'background_mobile_url', '');
+INSERT INTO `acg_config` VALUES (43, 'username_len', '6');
+INSERT INTO `acg_config` VALUES (44, 'cash_type_balance', '0');
+INSERT INTO `acg_config` VALUES (45, 'callback_domain', '');
+INSERT INTO `acg_config` VALUES (46, 'session_expire', '0');
+INSERT INTO `acg_config` VALUES (47, 'cash_type_usdt', '1');
+INSERT INTO `acg_config` VALUES (48, 'user_center_theme', 'MountFuji');
 
 
-DROP TABLE IF EXISTS `__PREFIX__coupon`;
-CREATE TABLE `__PREFIX__coupon`  (
+DROP TABLE IF EXISTS `acg_coupon`;
+CREATE TABLE `acg_coupon`  (
                                      `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                      `code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '优惠卷代码',
                                      `commodity_id` int UNSIGNED NOT NULL COMMENT '商品id',
@@ -271,6 +271,7 @@ CREATE TABLE `__PREFIX__coupon`  (
                                      `use_life` int UNSIGNED NOT NULL DEFAULT 0 COMMENT '已使用次数',
                                      `race` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '商品类别',
                                      `sku` json DEFAULT NULL COMMENT 'SKU',
+                                     `user_limit` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '使用限制：0=不限，1=仅限绑定邮箱或手机号的新用户',
                                      PRIMARY KEY (`id`) USING BTREE,
                                      UNIQUE INDEX `code`(`code` ASC) USING BTREE,
                                      INDEX `commodity_id`(`commodity_id` ASC) USING BTREE,
@@ -280,12 +281,13 @@ CREATE TABLE `__PREFIX__coupon`  (
                                      INDEX `status`(`status` ASC) USING BTREE,
                                      INDEX `order_id`(`trade_no` ASC) USING BTREE,
                                      INDEX `note`(`note` ASC) USING BTREE,
+                                     INDEX `user_limit`(`user_limit` ASC) USING BTREE,
                                      INDEX `race`(`race` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 
-DROP TABLE IF EXISTS `__PREFIX__manage`;
-CREATE TABLE `__PREFIX__manage`  (
+DROP TABLE IF EXISTS `acg_manage`;
+CREATE TABLE `acg_manage`  (
                                      `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
                                      `email` varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '邮箱',
                                      `password` varchar(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '密码',
@@ -306,11 +308,11 @@ CREATE TABLE `__PREFIX__manage`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = DYNAMIC;
 
 
-INSERT INTO `__PREFIX__manage` VALUES (1, '__MANAGE_EMAIL__', '__MANAGE_PASSWORD__', NULL, '__MANAGE_NICKNAME__', '__MANAGE_SALT__', '/favicon.ico', 1, 0, '1997-01-01 00:00:00', NULL , NULL, NULL, NULL, NULL);
+INSERT INTO `acg_manage` VALUES (1, '__MANAGE_EMAIL__', '__MANAGE_PASSWORD__', NULL, '__MANAGE_NICKNAME__', '__MANAGE_SALT__', '/favicon.ico', 1, 0, '1997-01-01 00:00:00', NULL , NULL, NULL, NULL, NULL);
 
 
-DROP TABLE IF EXISTS `__PREFIX__order`;
-CREATE TABLE `__PREFIX__order`  (
+DROP TABLE IF EXISTS `acg_order`;
+CREATE TABLE `acg_order`  (
                                     `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                     `owner` int UNSIGNED NOT NULL DEFAULT 0 COMMENT '所属会员：0=游客，其他等于会员UID',
                                     `user_id` int UNSIGNED NOT NULL DEFAULT 0 COMMENT '商户ID：0=系统，其他等于会员ID',
@@ -361,19 +363,19 @@ CREATE TABLE `__PREFIX__order`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 
-DROP TABLE IF EXISTS `__PREFIX__order_option`;
-CREATE TABLE `__PREFIX__order_option`  (
+DROP TABLE IF EXISTS `acg_order_option`;
+CREATE TABLE `acg_order_option`  (
                                            `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                            `order_id` int UNSIGNED NOT NULL COMMENT '订单id',
                                            `option` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '配置数据',
                                            PRIMARY KEY (`id`) USING BTREE,
                                            UNIQUE INDEX `order_id`(`order_id` ASC) USING BTREE,
-                                           CONSTRAINT `__PREFIX__order_option_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `__PREFIX__order` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                                           CONSTRAINT `acg_order_option_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `acg_order` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 
-DROP TABLE IF EXISTS `__PREFIX__pay`;
-CREATE TABLE `__PREFIX__pay`  (
+DROP TABLE IF EXISTS `acg_pay`;
+CREATE TABLE `acg_pay`  (
                                   `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                   `name` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '支付名称',
                                   `icon` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '图标',
@@ -394,12 +396,12 @@ CREATE TABLE `__PREFIX__pay`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 
-INSERT INTO `__PREFIX__pay` VALUES (1, '余额', '/assets/static/images/wallet.png', '#system', 1, 0, '1997-01-01 00:00:00', '#system', 999, 0, 0.000, 0);
-INSERT INTO `__PREFIX__pay` VALUES (2, '支付宝', '/assets/user/images/cash/alipay.png', 'alipay', 1, 1, '1997-01-01 00:00:00', 'Epay', 1, 0, 0.000, 0);
+INSERT INTO `acg_pay` VALUES (1, '余额', '/assets/static/images/wallet.png', '#system', 1, 0, '1997-01-01 00:00:00', '#system', 999, 0, 0.000, 0);
+INSERT INTO `acg_pay` VALUES (2, '支付宝', '/assets/user/images/cash/alipay.png', 'alipay', 1, 1, '1997-01-01 00:00:00', 'Epay', 1, 0, 0.000, 0);
 
 
-DROP TABLE IF EXISTS `__PREFIX__shared`;
-CREATE TABLE `__PREFIX__shared`  (
+DROP TABLE IF EXISTS `acg_shared`;
+CREATE TABLE `acg_shared`  (
                                      `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                      `type` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '对接类型：0=内置，其他待扩展',
                                      `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '店铺名称',
@@ -413,8 +415,8 @@ CREATE TABLE `__PREFIX__shared`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 
-DROP TABLE IF EXISTS `__PREFIX__user`;
-CREATE TABLE `__PREFIX__user`  (
+DROP TABLE IF EXISTS `acg_user`;
+CREATE TABLE `acg_user`  (
                                    `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                    `username` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '会员名',
                                    `email` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '邮箱',
@@ -452,8 +454,8 @@ CREATE TABLE `__PREFIX__user`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1000 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 
-DROP TABLE IF EXISTS `__PREFIX__user_category`;
-CREATE TABLE `__PREFIX__user_category`  (
+DROP TABLE IF EXISTS `acg_user_category`;
+CREATE TABLE `acg_user_category`  (
                                             `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                             `user_id` int UNSIGNED NOT NULL COMMENT '商家id',
                                             `category_id` int UNSIGNED NOT NULL COMMENT '分类id',
@@ -462,15 +464,15 @@ CREATE TABLE `__PREFIX__user_category`  (
                                             PRIMARY KEY (`id`) USING BTREE,
                                             UNIQUE INDEX `user_id`(`user_id` ASC, `category_id` ASC) USING BTREE,
                                             INDEX `status`(`status` ASC) USING BTREE,
-                                            INDEX `__PREFIX__user_category_ibfk_2`(`category_id` ASC) USING BTREE,
+                                            INDEX `acg_user_category_ibfk_2`(`category_id` ASC) USING BTREE,
                                             INDEX `user_id_2`(`user_id` ASC) USING BTREE,
-                                            CONSTRAINT `__PREFIX__user_category_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `__PREFIX__user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
-                                            CONSTRAINT `__PREFIX__user_category_ibfk_2` FOREIGN KEY (`category_id`) REFERENCES `__PREFIX__category` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                                            CONSTRAINT `acg_user_category_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `acg_user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+                                            CONSTRAINT `acg_user_category_ibfk_2` FOREIGN KEY (`category_id`) REFERENCES `acg_category` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 
-DROP TABLE IF EXISTS `__PREFIX__user_commodity`;
-CREATE TABLE `__PREFIX__user_commodity`  (
+DROP TABLE IF EXISTS `acg_user_commodity`;
+CREATE TABLE `acg_user_commodity`  (
                                              `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                              `user_id` int UNSIGNED NOT NULL COMMENT '商家id',
                                              `commodity_id` int UNSIGNED NOT NULL COMMENT '商品id',
@@ -482,13 +484,13 @@ CREATE TABLE `__PREFIX__user_commodity`  (
   INDEX `commodity_id`(`commodity_id` ASC) USING BTREE,
   INDEX `user_id_2`(`user_id` ASC) USING BTREE,
   INDEX `status`(`status` ASC) USING BTREE,
-  CONSTRAINT `__PREFIX__user_commodity_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `__PREFIX__user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
-  CONSTRAINT `__PREFIX__user_commodity_ibfk_2` FOREIGN KEY (`commodity_id`) REFERENCES `__PREFIX__commodity` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+  CONSTRAINT `acg_user_commodity_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `acg_user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `acg_user_commodity_ibfk_2` FOREIGN KEY (`commodity_id`) REFERENCES `acg_commodity` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 
-DROP TABLE IF EXISTS `__PREFIX__user_group`;
-CREATE TABLE `__PREFIX__user_group`  (
+DROP TABLE IF EXISTS `acg_user_group`;
+CREATE TABLE `acg_user_group`  (
                                          `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                          `name` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '等级名称',
                                          `icon` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '等级图标',
@@ -500,15 +502,15 @@ CREATE TABLE `__PREFIX__user_group`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 
-INSERT INTO `__PREFIX__user_group` VALUES (1, '一贫如洗', '/assets/static/images/group/ic_user level_1.png', null, 0.30, 0.00);
-INSERT INTO `__PREFIX__user_group` VALUES (2, '小康之家', '/assets/static/images/group/ic_user level_2.png', null, 0.25, 50.00);
-INSERT INTO `__PREFIX__user_group` VALUES (3, '腰缠万贯', '/assets/static/images/group/ic_user level_3.png', null, 0.20, 100.00);
-INSERT INTO `__PREFIX__user_group` VALUES (4, '富甲一方', '/assets/static/images/group/ic_user level_4.png', null, 0.15, 200.00);
-INSERT INTO `__PREFIX__user_group` VALUES (5, '富可敌国', '/assets/static/images/group/ic_user level_5.png', null, 0.10, 300.00);
-INSERT INTO `__PREFIX__user_group` VALUES (6, '至尊', '/assets/static/images/group/ic_user level_6.png', null, 0.05, 500.00);
+INSERT INTO `acg_user_group` VALUES (1, '一贫如洗', '/assets/static/images/group/ic_user level_1.png', null, 0.30, 0.00);
+INSERT INTO `acg_user_group` VALUES (2, '小康之家', '/assets/static/images/group/ic_user level_2.png', null, 0.25, 50.00);
+INSERT INTO `acg_user_group` VALUES (3, '腰缠万贯', '/assets/static/images/group/ic_user level_3.png', null, 0.20, 100.00);
+INSERT INTO `acg_user_group` VALUES (4, '富甲一方', '/assets/static/images/group/ic_user level_4.png', null, 0.15, 200.00);
+INSERT INTO `acg_user_group` VALUES (5, '富可敌国', '/assets/static/images/group/ic_user level_5.png', null, 0.10, 300.00);
+INSERT INTO `acg_user_group` VALUES (6, '至尊', '/assets/static/images/group/ic_user level_6.png', null, 0.05, 500.00);
 
-DROP TABLE IF EXISTS `__PREFIX__user_recharge`;
-CREATE TABLE `__PREFIX__user_recharge`  (
+DROP TABLE IF EXISTS `acg_user_recharge`;
+CREATE TABLE `acg_user_recharge`  (
                                             `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                             `trade_no` char(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '订单号',
                                             `user_id` int UNSIGNED NOT NULL COMMENT '用户id',
@@ -525,12 +527,12 @@ CREATE TABLE `__PREFIX__user_recharge`  (
                                             INDEX `user_id`(`user_id` ASC) USING BTREE,
                                             INDEX `pay_id`(`pay_id` ASC) USING BTREE,
                                             INDEX `status`(`status` ASC) USING BTREE,
-                                            CONSTRAINT `__PREFIX__user_recharge_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `__PREFIX__user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                                            CONSTRAINT `acg_user_recharge_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `acg_user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 
-DROP TABLE IF EXISTS `__PREFIX__manage_log`;
-CREATE TABLE `__PREFIX__manage_log`  (
+DROP TABLE IF EXISTS `acg_manage_log`;
+CREATE TABLE `acg_manage_log`  (
                                          `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键id',
                                          `email` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '管理员邮箱',
                                          `nickname` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '管理员呢称',
@@ -548,16 +550,16 @@ CREATE TABLE `__PREFIX__manage_log`  (
                                          INDEX `content`(`content`) USING BTREE
 ) ENGINE = MyISAM CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
-DROP TABLE IF EXISTS `__PREFIX__commodity_group`;
-CREATE TABLE IF NOT EXISTS `__PREFIX__commodity_group` (
+DROP TABLE IF EXISTS `acg_commodity_group`;
+CREATE TABLE IF NOT EXISTS `acg_commodity_group` (
                                                            `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
     `name` varchar(32) NOT NULL COMMENT '组名称',
     `commodity_list` json DEFAULT NULL COMMENT '商品列表',
     PRIMARY KEY (`id`)
     ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4;
 
-DROP TABLE IF EXISTS `__PREFIX__upload`;
-CREATE TABLE `__PREFIX__upload` (
+DROP TABLE IF EXISTS `acg_upload`;
+CREATE TABLE `acg_upload` (
                                     `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
                                     `user_id` int(11) unsigned DEFAULT NULL COMMENT 'null=后台',
                                     `hash` varchar(32) NOT NULL COMMENT '文件MD5',

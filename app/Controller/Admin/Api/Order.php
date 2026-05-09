@@ -12,6 +12,9 @@ use App\Entity\Query\Save;
 use App\Interceptor\ManageSession;
 use App\Model\ManageLog;
 use App\Service\Query;
+use App\Util\Plugin;
+use Illuminate\Database\Capsule\Manager;
+use Illuminate\Database\Schema\Blueprint;
 use App\Util\Date;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -23,6 +26,8 @@ use Kernel\Waf\Filter;
 #[Interceptor(ManageSession::class, Interceptor::TYPE_API)]
 class Order extends Manage
 {
+    private const EXTRACT_RECORD_TABLE = 'api_notification_extract_record';
+
     #[Inject]
     private Query $query;
 
@@ -104,6 +109,151 @@ class Order extends Manage
 
         ManageLog::log($this->getManage(), "进行了一键清理无用商品订单操作");
         return $this->json(200, '（＾∀＾）清理完成');
+    }
+
+    private function normalizeTradeNos(mixed $value): array
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $value = is_array($decoded) ? $decoded : preg_split('/[,\r\n|]+/', $value);
+        }
+
+        $tradeNos = array_map(static fn($item) => trim((string)$item), (array)$value);
+        $tradeNos = array_filter($tradeNos, static fn(string $tradeNo) => $tradeNo !== '');
+
+        return array_values(array_unique($tradeNos));
+    }
+
+    private function ensureExtractRecordTable(): void
+    {
+        if (Manager::schema()->hasTable(self::EXTRACT_RECORD_TABLE)) {
+            return;
+        }
+
+        Manager::schema()->create(self::EXTRACT_RECORD_TABLE, function (Blueprint $blueprint) {
+            $blueprint->increments('id');
+            $blueprint->string('trade_no', 64)->nullable(true)->index();
+            $blueprint->string('order_id', 64)->nullable(true);
+            $blueprint->string('commodity_id', 64)->nullable(true)->index();
+            $blueprint->string('card', 191)->unique();
+            $blueprint->tinyInteger('status')->default(1);
+            $blueprint->dateTime('extracted_at')->nullable(true)->index();
+            $blueprint->string('source', 64)->nullable(true);
+            $blueprint->text('raw')->nullable(true);
+            $blueprint->dateTime('created_at')->nullable(true);
+            $blueprint->dateTime('updated_at')->nullable(true);
+        });
+    }
+
+    private function splitSecretCards(string $secret): array
+    {
+        $cards = preg_split('/[\r\n|]+/', $secret) ?: [];
+        $cards = array_map('trim', $cards);
+        $cards = array_filter($cards, static fn(string $card) => $card !== '');
+
+        return array_values(array_unique($cards));
+    }
+
+    private function getCardExtractPrefixes(array $config): array
+    {
+        $prefixText = trim((string)($config['card_extract_prefixes'] ?? ''));
+        if ($prefixText === '') {
+            return [];
+        }
+
+        $prefixes = preg_split('/[,\r\n|]+/', $prefixText) ?: [];
+        $prefixes = array_map(static fn(string $prefix) => strtolower(trim(trim($prefix), '-')), $prefixes);
+        $prefixes = array_filter($prefixes, static fn(string $prefix) => $prefix !== '');
+
+        return array_values(array_unique($prefixes));
+    }
+
+    private function isCardExtractUniversalCard(string $card, array $config): bool
+    {
+        $card = trim($card);
+        if ($card === '') {
+            return false;
+        }
+
+        $prefixes = $this->getCardExtractPrefixes($config);
+        if (count($prefixes) > 0) {
+            foreach ($prefixes as $prefix) {
+                if (str_starts_with(strtolower($card), $prefix . '-')) {
+                    return preg_match('/^[a-z0-9_]+-[A-Za-z0-9]{16,64}$/', $card) === 1;
+                }
+            }
+            return false;
+        }
+
+        return preg_match('/^[a-z0-9_]+-[A-Za-z0-9]{16,64}$/', $card) === 1;
+    }
+
+    private function filterCardExtractCards(array $cards, array $config): array
+    {
+        $cards = array_filter($cards, fn(string $card) => $this->isCardExtractUniversalCard($card, $config));
+
+        return array_values(array_unique($cards));
+    }
+
+    public function extractStatus(): array
+    {
+        $tradeNos = $this->normalizeTradeNos($this->request->post('trade_nos', Filter::NORMAL));
+        if (count($tradeNos) === 0) {
+            return $this->json(200, 'ok', []);
+        }
+
+        $this->ensureExtractRecordTable();
+        $config = Plugin::getConfig('ApiNotification', false);
+        $orders = \App\Model\Order::query()
+            ->whereIn('trade_no', $tradeNos)
+            ->get(['id', 'trade_no', 'secret']);
+
+        $cardsByTradeNo = [];
+        $allCards = [];
+        foreach ($orders as $order) {
+            $cards = $this->filterCardExtractCards($this->splitSecretCards((string)$order->secret), $config);
+            $cardsByTradeNo[(string)$order->trade_no] = $cards;
+            $allCards = array_merge($allCards, $cards);
+        }
+
+        $allCards = array_values(array_unique($allCards));
+        $recordByCard = [];
+        if (count($allCards) > 0) {
+            $records = Manager::table(self::EXTRACT_RECORD_TABLE)
+                ->whereIn('card', $allCards)
+                ->get();
+
+            foreach ($records as $record) {
+                $recordByCard[(string)$record->card] = $record;
+            }
+        }
+
+        $statusMap = [];
+        foreach ($tradeNos as $tradeNo) {
+            $cards = $cardsByTradeNo[$tradeNo] ?? [];
+            $items = [];
+            $extracted = 0;
+            foreach ($cards as $card) {
+                $record = $recordByCard[$card] ?? null;
+                $isExtracted = $record !== null && (int)$record->status === 1;
+                if ($isExtracted) {
+                    $extracted++;
+                }
+                $items[] = [
+                    'card' => $card,
+                    'extracted' => $isExtracted,
+                    'extracted_at' => $isExtracted ? (string)$record->extracted_at : ''
+                ];
+            }
+
+            $statusMap[$tradeNo] = [
+                'total' => count($cards),
+                'extracted' => $extracted,
+                'cards' => $items
+            ];
+        }
+
+        return $this->json(200, 'ok', $statusMap);
     }
 
 

@@ -31,6 +31,60 @@
     }
 
 
+    const escapeExtractHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+
+    const renderExtractStatus = row => {
+        if (!row || !row.trade_no) {
+            return '-';
+        }
+        return `<span class="api-notification-extract-status" data-trade-no="${escapeExtractHtml(row.trade_no)}">加载中</span>`;
+    };
+
+    const applyExtractStatus = statusMap => {
+        $('.api-notification-extract-status').each(function () {
+            const el = $(this);
+            const tradeNo = el.data('trade-no');
+            const status = statusMap && statusMap[tradeNo];
+            if (!status || status.total <= 0) {
+                el.html('-');
+                return;
+            }
+
+            const title = status.cards.map(item => {
+                return `${item.card}：${item.extracted ? `已提取 ${item.extracted_at}` : '未提取'}`;
+            }).join('\n');
+            const badgeClass = status.extracted >= status.total ? 'badge-light-success' : 'badge-light-warning';
+            el.html(`<span class="badge ${badgeClass}" title="${escapeExtractHtml(title)}">已提取 ${status.extracted}/${status.total}</span>`);
+        });
+    };
+
+    const loadExtractStatus = () => {
+        const tradeNos = [];
+        $('.api-notification-extract-status').each(function () {
+            const tradeNo = $(this).data('trade-no');
+            if (tradeNo && !tradeNos.includes(tradeNo)) {
+                tradeNos.push(tradeNo);
+            }
+        });
+        if (tradeNos.length === 0) {
+            return;
+        }
+
+        util.post({
+            url: "/admin/api/order/extractStatus",
+            loader: false,
+            data: {trade_nos: JSON.stringify(tradeNos)},
+            done: res => applyExtractStatus(res.data || {}),
+            fail: () => applyExtractStatus({})
+        });
+    };
+
     table.setColumns([
         {checkbox: true}
         , {
@@ -76,6 +130,9 @@
         }
         , {
             field: 'delivery_status', title: '发货状态', dict: "_order_delivery_status"
+        }
+        , {
+            field: 'api_notification_extract_status', title: '提取状态', formatter: (_, row) => renderExtractStatus(row)
         }
         , {
             field: 'cost', title: '手续费', formatter: _ => format.money(_, "blue")
@@ -234,9 +291,14 @@
         $('.order_count').html(res.data.total);
         $('.order_amount').html(res.data.order_amount);
         $('.order_cost').html(res.data.order_cost);
+        setTimeout(loadExtractStatus, 0);
     });
 
     table.render();
+
+    $('#order-table').on('post-body.bs.table', () => {
+        setTimeout(loadExtractStatus, 0);
+    });
 
     $('.clear').click(() => {
         util.post({

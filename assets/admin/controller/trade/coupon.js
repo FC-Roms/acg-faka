@@ -117,6 +117,14 @@
                             default: 0
                         },
                         {
+                            title: "使用人群",
+                            name: "user_limit",
+                            type: "radio",
+                            dict: "_coupon_user_limit",
+                            default: 0,
+                            placeholder: "选择新客限制后，仅已登录且绑定邮箱或手机号、未在本店支付过订单的会员可使用"
+                        },
+                        {
                             title: "面值(金额/百分比)",
                             name: "money",
                             type: "input",
@@ -180,6 +188,9 @@
         }
         , {
             field: 'mode', title: '抵扣模式', dict: "_coupon_mode"
+        }
+        , {
+            field: 'user_limit', title: '使用人群', dict: "_coupon_user_limit"
         }
         , {
             field: 'money', title: '面值', formatter: (_, __) => {
@@ -275,6 +286,7 @@
         {title: "备注信息", name: "equal-note", type: "input"},
         {title: "卷面值", name: "equal-money", type: "input"},
         {title: "会员ID，0=系统", name: "equal-owner", type: "input"},
+        {title: "使用人群", name: "equal-user_limit", type: "select", dict: "_coupon_user_limit"},
         {title: "商品分类", name: "equal-category_id", type: "select", dict: "category,id,name", search: true},
         {
             title: "查询商品",

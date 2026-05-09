@@ -32,9 +32,10 @@ interface Order
      * @param int|null $cardId
      * @param string|null $coupon
      * @param UserGroup|null $group
+     * @param User|null $user
      * @return string
      */
-    public function valuation(Commodity|int $commodity, int $num = 1, ?string $race = null, ?array $sku = [], ?int $cardId = null, ?string $coupon = null, ?UserGroup $group = null): string;
+    public function valuation(Commodity|int $commodity, int $num = 1, ?string $race = null, ?array $sku = [], ?int $cardId = null, ?string $coupon = null, ?UserGroup $group = null, ?User $user = null): string;
 
     /**
      * @param Commodity|int $commodity

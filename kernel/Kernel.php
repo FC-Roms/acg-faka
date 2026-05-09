@@ -33,6 +33,14 @@ session_name("ACG-SHOP");
 //session_start();
 //session_write_close();
 try {
+    // 兼容部分服务器只转发到 index.php、未附带 s 参数的开放接口请求。
+    if (!isset($_GET['s'])) {
+        $requestPath = (string)parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+        if ($requestPath === '/opencard' || str_starts_with($requestPath, '/opencard/')) {
+            $_GET['s'] = $requestPath;
+        }
+    }
+
     preg_match('/\/item\/(\d+)/', $_GET['s'] ?? "/", $_item);
     preg_match('/\/cat\/(\d+|recommend)/', $_GET['s'] ?? "/", $_cat);
 
@@ -155,6 +163,16 @@ try {
         echo $result;
     }
 } catch (Throwable $e) {
+    $errorRoute = $_GET['s'] ?? (string)parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+    if (str_starts_with('/' . trim((string)$errorRoute, '/'), '/opencard/')) {
+        header('content-type:application/json;charset=utf-8');
+        exit(json_encode([
+            "code" => 0,
+            "msg" => $e instanceof NotFoundException ? "开放接口路由不存在" : "开放接口异常: " . $e->getMessage(),
+            "route" => '/' . trim((string)$errorRoute, '/')
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
+
     if ($e instanceof NotFoundException) {
         exit(feedback("404 Not Found"));
     } elseif ($e instanceof \Kernel\Exception\ParameterMissException) {

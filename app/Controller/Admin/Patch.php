@@ -37,4 +37,20 @@ class Patch extends \App\Controller\Base\View\Manage
 
         Client::redirect("/admin/dashboard/index", "补丁安装成功，请回到后台继续更新。", 10);
     }
+
+    /**
+     * 增加优惠券使用人群限制字段
+     * @return void
+     */
+    public function couponUserLimit(): void
+    {
+        if (!Manager::schema()->hasColumn("coupon", "user_limit")) {
+            Manager::schema()->table("coupon", function (Blueprint $blueprint) {
+                $blueprint->tinyInteger("user_limit")->unsigned()->default(0)->comment("使用限制：0=不限，1=仅限绑定邮箱或手机号的新用户")->after("sku");
+                $blueprint->index("user_limit");
+            });
+        }
+
+        Client::redirect("/admin/dashboard/index", "优惠券新用户限制字段安装成功。", 5);
+    }
 }

@@ -63,6 +63,89 @@
         });
     }
 
+    const openApiNotificationBackfill = () => {
+        const content = `
+            <div style="padding: 18px;">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">开始时间</label>
+                    <div class="layui-input-block">
+                        <input type="text" class="layui-input api-notification-backfill-start" placeholder="可选，例如 2026-05-01">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">结束时间</label>
+                    <div class="layui-input-block">
+                        <input type="text" class="layui-input api-notification-backfill-end" placeholder="可选，例如 2026-05-08">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">商品ID</label>
+                    <div class="layui-input-block">
+                        <input type="number" class="layui-input api-notification-backfill-commodity" placeholder="可选，留空则使用插件已选择商品">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">页码</label>
+                    <div class="layui-input-block">
+                        <input type="number" class="layui-input api-notification-backfill-page" value="1" min="1">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">每批数量</label>
+                    <div class="layui-input-block">
+                        <input type="number" class="layui-input api-notification-backfill-limit" value="100" min="1" max="500">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <div class="text-muted">只会同步已支付且已发货订单。建议先点“预检”，确认数量后再“开始回补”。</div>
+                    </div>
+                </div>
+                <pre class="api-notification-backfill-result" style="display:none;max-height:260px;overflow:auto;background:#111827;color:#d1fae5;padding:12px;border-radius:4px;"></pre>
+            </div>
+        `;
+
+        const collectData = (layero, dryRun) => ({
+            start_date: layero.find('.api-notification-backfill-start').val(),
+            end_date: layero.find('.api-notification-backfill-end').val(),
+            commodity_id: layero.find('.api-notification-backfill-commodity').val(),
+            page: layero.find('.api-notification-backfill-page').val() || 1,
+            limit: layero.find('.api-notification-backfill-limit').val() || 100,
+            dry_run: dryRun ? 1 : 0
+        });
+
+        const runBackfill = (layero, dryRun) => {
+            util.post({
+                url: "/plugin/ApiNotification/backfill/run",
+                data: collectData(layero, dryRun),
+                done: res => {
+                    const result = JSON.stringify(res.data || {}, null, 2);
+                    layero.find('.api-notification-backfill-result').show().text(result);
+                    layer.msg(res.msg || "处理完成");
+                }
+            });
+        };
+
+        layer.open({
+            type: 1,
+            shade: 0.4,
+            shadeClose: true,
+            title: '<i class="fa-duotone fa-regular fa-clock-rotate-left"></i> ApiNotification 历史订单回补',
+            btn: ["预检", "开始回补", "关闭"],
+            content,
+            area: util.isPc() ? ["720px", "620px"] : ["100%", "100%"],
+            maxmin: true,
+            yes: (index, layero) => {
+                runBackfill(layero, true);
+                return false;
+            },
+            btn2: (index, layero) => {
+                message.ask("确认开始回补当前筛选范围内的历史订单吗？", () => runBackfill(layero, false));
+                return false;
+            }
+        });
+    }
+
     table = new Table("/admin/api/plugin/getPlugins", "#plugin-table");
     table.setColumns([
         {checkbox: true},
@@ -114,6 +197,15 @@
                     show: item => item.hasOwnProperty('PLUGIN_SUBMIT') && item.PLUGIN_SUBMIT.length > 0,
                     click: (event, value, row, index) => {
                         modal(util.icon("fa-duotone fa-regular fa-gear") + row.NAME, row);
+                    }
+                },
+                {
+                    icon: 'fa-duotone fa-regular fa-clock-rotate-left',
+                    class: 'text-warning',
+                    title: '历史订单回补',
+                    show: item => item.id === 'ApiNotification',
+                    click: () => {
+                        openApiNotificationBackfill();
                     }
                 },
                 {

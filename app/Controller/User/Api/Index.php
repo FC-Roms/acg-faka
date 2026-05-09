@@ -319,7 +319,8 @@ class Index extends User
             sku: (array)$this->request->post("sku"),
             cardId: (int)$this->request->post("card_id"),
             coupon: (string)$this->request->post("coupon"),
-            group: $this->getUserGroup()
+            group: $this->getUserGroup(),
+            user: $this->getUser()
         );
         $price = $this->shop->getSubstationPrice((int)$this->request->post("item_id"), $price);
         return $this->json(data: ["price" => $price]);

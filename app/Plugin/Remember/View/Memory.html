@@ -1,0 +1,22 @@
+<script>
+    function getCookie(name) {
+        let strCookie = document.cookie;
+        let arrCookie = strCookie.split("; ");
+        for (let i = 0; i < arrCookie.length; i++) {
+            let arr = arrCookie[i].split("=");
+            if (name == arr[0]) {
+                return arr[1];
+            }
+        }
+        return "";
+    }
+    #{if $user}
+    localStorage.setItem("Remember", getCookie("ACG-SHOP"));
+    #{else}
+    if (localStorage.hasOwnProperty("Remember")) {
+        document.cookie = "ACG-SHOP=" + localStorage.getItem("Remember");
+        localStorage.removeItem("Remember");
+        window.location.reload();
+    }
+    #{/if}
+</script>
