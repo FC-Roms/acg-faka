@@ -5,9 +5,11 @@ namespace App\Model;
 
 
 use App\Util\Ini;
+use Illuminate\Database\Capsule\Manager;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Schema\Blueprint;
 use Kernel\Exception\JSONException;
 
 /**
@@ -45,6 +47,7 @@ use Kernel\Exception\JSONException;
  * @property string $leave_message
  * @property int $only_user
  * @property int $purchase_count
+ * @property int $sold_base
  * @property string $widget
  * @property int $minimum
  * @property int $maximum
@@ -100,6 +103,7 @@ class Commodity extends Model
         'send_email' => 'integer',
         'only_user' => 'integer',
         'purchase_count' => 'integer',
+        'sold_base' => 'integer',
         'minimum' => 'integer',
         'maximum' => 'integer',
         'shared_amount_sync' => 'integer',
@@ -107,6 +111,28 @@ class Commodity extends Model
         'shared_sync' => 'integer',
         'shared_stock' => 'json'
     ];
+
+    private static ?bool $soldBaseColumnReady = null;
+
+    public static function ensureSoldBaseColumn(): void
+    {
+        if (self::$soldBaseColumnReady === true) {
+            return;
+        }
+
+        if (!Manager::schema()->hasColumn('commodity', 'sold_base')) {
+            Manager::schema()->table('commodity', function (Blueprint $blueprint) {
+                $blueprint->integer('sold_base')->unsigned()->default(0)->comment('前台已售增加数量')->after('purchase_count');
+            });
+        }
+
+        self::$soldBaseColumnReady = true;
+    }
+
+    public static function getDisplaySold(int|string|null $realSold, int|string|null $soldBase): int
+    {
+        return max(0, (int)$realSold) + max(0, (int)$soldBase);
+    }
 
     public function owner(): ?HasOne
     {

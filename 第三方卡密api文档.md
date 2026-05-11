@@ -5,6 +5,7 @@
 | 接口 | 方法 | 路径 | 说明 |
 |------|------|------|------|
 | 批量上传卡密 | POST | `/opencard/upload` | 上传卡密到指定商品 |
+| 批量清除卡密 | POST | `/opencard/remove` | 按卡密内容清除未出售卡密，可限定商品 |
 | 获取商品列表 | POST | `/opencard/commodities` | 获取用户可操作的商品列表 |
 
 ---
@@ -117,7 +118,35 @@ function generateSignature(data, appKey) {
 }
 ```
 
-### 2. 获取商品列表
+### 2. 批量清除卡密
+
+**接口地址**：`POST /opencard/remove`
+
+**请求参数**：
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `commodity_id` | int | 否 | 商品ID；不传则在当前商户全部未出售卡密中按卡密内容清除 |
+| `secret` | string | 是 | 需要清除的卡密，一行一个 |
+| `cards` | string/array | 否 | 也可传 JSON 数组；传入时优先使用 |
+
+仅会删除 `status=0` 的未出售卡密；传入 `commodity_id` 时限定该商品，不传时在当前商户全部未出售卡密中按卡密内容清除。已售出并关联订单的卡密不会被删除。
+
+**成功响应**：
+```json
+{
+    "code": 200,
+    "msg": "当前商户共计请求清除:2张卡密，成功:2张，未找到:0张",
+    "data": {
+        "commodity_id": null,
+        "total": 2,
+        "removed": 2,
+        "missing": 0
+    }
+}
+```
+
+### 3. 获取商品列表
 
 **接口地址**：`POST /opencard/commodities`
 

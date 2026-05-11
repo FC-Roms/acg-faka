@@ -316,6 +316,80 @@ class Opencard
         return ["code" => 200, "msg" => "共计导入:{$count}张卡密，成功:{$success}张，失败：{$error}张", "data" => ["total" => $count, "success" => $success, "error" => $error]];
     }
 
+    public function remove(Request $request): array
+    {
+        $appId = $this->getApiHeader($request, "Api-Id");
+        $signature = $this->getApiHeader($request, "Api-Signature");
+
+        if (!$appId || !$signature) {
+            throw new JSONException("缺少API认证信息");
+        }
+
+        $user = User::query()->where("id", (int)$appId)->first();
+
+        if (!$user || $user->status != 1) {
+            throw new JSONException("无效的商户ID");
+        }
+
+        $postData = $request->post();
+        $expectedSignature = Str::generateSignature($postData, $user->app_key);
+
+        if (!hash_equals($expectedSignature, $signature)) {
+            throw new JSONException("签名验证失败");
+        }
+
+        $commodityId = $request->post("commodity_id", Filter::INTEGER);
+        if ($commodityId > 0 && !Commodity::query()->where("owner", $user->id)->where("id", $commodityId)->exists()) {
+            throw new JSONException("商品不存在或无权操作");
+        }
+
+        $cards = $request->post("cards", Filter::NORMAL);
+        if (is_string($cards)) {
+            $decoded = json_decode($cards, true);
+            $cards = is_array($decoded) ? $decoded : $this->splitSecretCards($cards);
+        }
+
+        if (!is_array($cards) || count($cards) === 0) {
+            $secret = trim((string)$request->post("secret", Filter::NORMAL));
+            $cards = $secret === '' ? [] : $this->splitSecretCards($secret);
+        }
+
+        $cards = array_map(static fn($card) => trim((string)$card), $cards);
+        $cards = array_values(array_unique(array_filter($cards, static fn(string $card) => $card !== '')));
+
+        if (count($cards) === 0) {
+            throw new JSONException("请至少提供1条需要清除的卡密");
+        }
+
+        $query = CardModel::query()
+            ->where("owner", $user->id)
+            ->where("status", 0)
+            ->whereIn("secret", $cards);
+
+        if ($commodityId > 0) {
+            $query->where("commodity_id", $commodityId);
+        }
+
+        $removed = (clone $query)->count();
+        if ($removed > 0) {
+            $query->delete();
+        }
+
+        $missing = max(0, count($cards) - $removed);
+        $scope = $commodityId > 0 ? "商品{$commodityId}" : "当前商户";
+
+        return [
+            "code" => 200,
+            "msg" => "{$scope}共计请求清除:" . count($cards) . "张卡密，成功:{$removed}张，未找到:{$missing}张",
+            "data" => [
+                "commodity_id" => $commodityId > 0 ? $commodityId : null,
+                "total" => count($cards),
+                "removed" => $removed,
+                "missing" => $missing
+            ]
+        ];
+    }
+
     public function commodities(Request $request): array
     {
         $appId = $this->getApiHeader($request, "Api-Id");

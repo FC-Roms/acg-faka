@@ -252,6 +252,14 @@
                             default: 0,
                         },
                         {
+                            title: "已售增加数量",
+                            name: "sold_base",
+                            type: "number",
+                            placeholder: "前台已售额外增加数量",
+                            tips: "前台展示的已售数量 = 实际已发货订单数量 + 这里设置的数量",
+                            default: 0,
+                        },
+                        {
                             title: "隐藏库存",
                             name: "inventory_hidden",
                             type: "switch",
@@ -558,6 +566,12 @@ ACC_JP_6M_0KLD-22MM-PP31║地区:日区·时长:6个月
         {field: 'id', title: '商品ID'},
         {
             field: 'card_success_count', title: '已出售'
+        },
+        {
+            field: 'sold_base', title: '已售增加数量'
+        },
+        {
+            field: 'order_sold', title: '前台已售'
         },
         {
             field: 'delivery_way', title: '发货方式', dict: "_commodity_delivery_way"

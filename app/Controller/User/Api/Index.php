@@ -61,6 +61,7 @@ class Index extends User
      */
     public function commodity(): array
     {
+        Commodity::ensureSoldBaseColumn();
         $keywords = (string)$_GET['keywords'];
         $limit = (int)$_GET['limit'];
         $page = (int)$_GET['page'];
@@ -129,7 +130,7 @@ class Index extends User
                 'id', 'name', 'cover',
                 'status', 'delivery_way', 'price',
                 'user_price',
-                'level_disable', 'level_price', 'hide', 'owner', 'inventory_hidden', "recommend", 'category_id', 'stock', 'shared_id'
+                'level_disable', 'level_price', 'hide', 'owner', 'inventory_hidden', "recommend", 'category_id', 'stock', 'shared_id', 'sold_base'
             ])
             ->withCount(['order as order_sold' => function (Builder $relation) {
                 $relation->where("delivery_status", 1);
@@ -158,6 +159,8 @@ class Index extends User
 
         //最终的商品数据遍历
         foreach ($data as $key => $val) {
+            $data[$key]['order_sold_real'] = (int)($val['order_sold'] ?? 0);
+            $data[$key]['order_sold'] = Commodity::getDisplaySold($val['order_sold'] ?? 0, $val['sold_base'] ?? 0);
             $parseGroupConfig = Commodity::parseGroupConfig($val['level_price'], $userGroup);
             if (!in_array((string)$val['category_id'], $cates) || $val['hide'] == 1 && (!$parseGroupConfig || !isset($parseGroupConfig['show']) || $parseGroupConfig['show'] != 1)) {
                 //隐藏商品

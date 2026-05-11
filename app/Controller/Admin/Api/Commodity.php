@@ -36,6 +36,7 @@ class Commodity extends Manage
      */
     public function data(): array
     {
+        \App\Model\Commodity::ensureSoldBaseColumn();
         $map = $_POST;
         $get = new Get(\App\Model\Commodity::class);
         $get->setPaginate((int)$this->request->post("page"), (int)$this->request->post("limit"));
@@ -65,6 +66,9 @@ class Commodity extends Manage
                 },
                 'card as card_success_count' => function (Builder $builder) {
                     $builder->where("status", 1);
+                },
+                'order as order_sold_real' => function (Builder $relation) {
+                    $relation->where("delivery_status", 1);
                 },
                 //商品总盈利
                 'order as order_all_amount' => function (Builder $relation) {
@@ -97,6 +101,7 @@ class Commodity extends Manage
                 }
             }
             $val['share_url'] = $url . "/item/{$val['id']}";
+            $val['order_sold'] = \App\Model\Commodity::getDisplaySold($val['order_sold_real'] ?? 0, $val['sold_base'] ?? 0);
         }
 
 
@@ -111,7 +116,9 @@ class Commodity extends Manage
      */
     public function save(Request $request): array
     {
+        \App\Model\Commodity::ensureSoldBaseColumn();
         $map = $request->post(flags: Filter::NORMAL);
+        $map['sold_base'] = max(0, (int)($map['sold_base'] ?? 0));
 
         //create new
         if ((int)$map['id'] == 0) {

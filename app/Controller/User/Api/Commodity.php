@@ -33,6 +33,7 @@ class Commodity extends User
      */
     public function data(): array
     {
+        \App\Model\Commodity::ensureSoldBaseColumn();
         $map = $_POST;
         $map['equal-owner'] = $this->getUser()->id;
         $get = new Get(\App\Model\Commodity::class);
@@ -50,6 +51,9 @@ class Commodity extends User
                     },
                     'card as card_success_count' => function (Builder $builder) {
                         $builder->where("status", 1);
+                    },
+                    'order as order_sold_real' => function (Builder $relation) {
+                        $relation->where("delivery_status", 1);
                     },
                     //商品总盈利
                     'order as order_all_amount' => function (Builder $relation) {
@@ -72,6 +76,7 @@ class Commodity extends User
 
         foreach ($data['list'] as &$item) {
             $item['share_url'] = Client::getUrl() . "/item/{$item['id']}";
+            $item['order_sold'] = \App\Model\Commodity::getDisplaySold($item['order_sold_real'] ?? 0, $item['sold_base'] ?? 0);
         }
 
         return $this->json(data: $data);
@@ -85,7 +90,9 @@ class Commodity extends User
      */
     public function save(Request $request): array
     {
+        \App\Model\Commodity::ensureSoldBaseColumn();
         $map = $request->post(flags: Filter::NORMAL);
+        $map['sold_base'] = max(0, (int)($map['sold_base'] ?? 0));
         $user = $this->getUser();
 
 
