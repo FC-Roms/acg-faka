@@ -87,11 +87,11 @@ class Coupon extends User
             throw new JSONException("ಠ_ಠ最少也要生成1张优惠券");
         }
 
-        if (!in_array($userLimit, [0, 1], true)) {
+        if (!in_array($userLimit, [0, 1, 2], true)) {
             throw new JSONException("优惠券使用人群设置错误");
         }
         $hasUserLimitColumn = Manager::schema()->hasColumn("coupon", "user_limit");
-        if ($userLimit === 1 && !$hasUserLimitColumn) {
+        if ($userLimit !== 0 && !$hasUserLimitColumn) {
             throw new JSONException("请先执行优惠券新用户限制数据库补丁");
         }
 

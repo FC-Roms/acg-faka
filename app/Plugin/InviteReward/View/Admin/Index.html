@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <title>#{$title}-#{$config.title}</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    #{css(
+    [
+    "/assets/admin/css/_admin.css",
+    "/assets/common/css/_.css"
+    ],
+    [
+    "/assets/admin/css/style.bundle.css",
+    "/assets/common/css/font.min.css",
+    "/assets/common/js/layui/css/layui.css",
+    "/assets/common/css/component.css",
+    "/assets/common/js/layer/theme/default/layer.css"
+    ])}
+    <style>
+        .invite-admin{max-width:1280px;margin:26px auto;padding:0 16px}
+        .invite-admin-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+        .invite-admin-title{font-size:22px;font-weight:700;color:#202124}
+        .invite-stat{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:12px;margin-bottom:14px}
+        .invite-stat .layui-card-body{font-size:24px;font-weight:700;color:#1f2937}
+        .invite-table-wrap{overflow:auto}
+        .invite-section{margin-top:14px}
+        @media (max-width:960px){.invite-stat{grid-template-columns:repeat(2,minmax(130px,1fr))}}
+    </style>
+</head>
+<body style="background: url('#{$config.background_url}') fixed no-repeat;background-size: cover;">
+<div style="background: rgba(255,255,255,0.82);min-height:100vh;overflow:auto;">
+    <div class="invite-admin">
+        <div class="invite-admin-head">
+            <div>
+                <div class="invite-admin-title">邀请奖励</div>
+                <div style="color:#666;margin-top:6px;">第一阶段：邀请绑定、优惠券奖励、硬币奖励、基础记录</div>
+            </div>
+            <a class="layui-btn layui-btn-primary layui-btn-sm" href="/admin/plugin/index">插件设置</a>
+        </div>
+
+        <div class="invite-stat">
+            <div class="layui-card">
+                <div class="layui-card-header">邀请关系</div>
+                <div class="layui-card-body">#{$summary.invite_count}</div>
+            </div>
+            <div class="layui-card">
+                <div class="layui-card-header">有效关系</div>
+                <div class="layui-card-body">#{$summary.valid_count}</div>
+            </div>
+            <div class="layui-card">
+                <div class="layui-card-header">已首单</div>
+                <div class="layui-card-body">#{$summary.paid_count}</div>
+            </div>
+            <div class="layui-card">
+                <div class="layui-card-header">成功奖励</div>
+                <div class="layui-card-body">#{$summary.reward_success_count}</div>
+            </div>
+            <div class="layui-card">
+                <div class="layui-card-header">失败奖励</div>
+                <div class="layui-card-body">#{$summary.reward_failed_count}</div>
+            </div>
+        </div>
+
+        <div class="layui-card invite-section">
+            <div class="layui-card-header">基础配置快照</div>
+            <div class="layui-card-body invite-table-wrap">
+                <table class="layui-table">
+                    <tbody>
+                    <tr><td style="width:200px;">插件状态</td><td>#{if $plugin_config.STATUS == 1}启用#{else}关闭#{/if}</td></tr>
+                    <tr><td>邀请有效天数</td><td>#{$plugin_config.invite_cookie_days}</td></tr>
+                    <tr><td>邀请人触发</td><td>#{$plugin_config.inviter_reward_trigger}</td></tr>
+                    <tr><td>邀请人优惠券</td><td>#{if $plugin_config.inviter_coupon_enabled == 1}#{$plugin_config.inviter_coupon_money}#{else}未启用#{/if}</td></tr>
+                    <tr><td>邀请人硬币</td><td>#{if $plugin_config.inviter_coin_enabled == 1}#{$plugin_config.inviter_coin_amount}#{else}未启用#{/if}</td></tr>
+                    <tr><td>新人触发</td><td>#{$plugin_config.invitee_reward_trigger}</td></tr>
+                    <tr><td>新人优惠券</td><td>#{if $plugin_config.invitee_coupon_enabled == 1}#{$plugin_config.invitee_coupon_money}#{else}未启用#{/if}</td></tr>
+                    <tr><td>新人硬币</td><td>#{if $plugin_config.invitee_coin_enabled == 1}#{$plugin_config.invitee_coin_amount}#{else}未启用#{/if}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="layui-card invite-section">
+            <div class="layui-card-header">最近邀请关系</div>
+            <div class="layui-card-body invite-table-wrap">
+                <table class="layui-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>邀请人</th>
+                        <th>新人</th>
+                        <th>邀请码</th>
+                        <th>状态</th>
+                        <th>首单</th>
+                        <th>首单时间</th>
+                        <th>注册时间</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    #{foreach $relations as $item}
+                    <tr>
+                        <td>#{$item.id}</td>
+                        <td>#{$item.inviter_user_id} #{$item.inviter_username}</td>
+                        <td>#{$item.invitee_user_id} #{$item.invitee_username}</td>
+                        <td>#{$item.invite_code}</td>
+                        <td>#{$item.status_text}</td>
+                        <td>#{$item.first_paid_text}</td>
+                        <td>#{$item.first_paid_time}</td>
+                        <td>#{$item.create_time}</td>
+                    </tr>
+                    #{/foreach}
+                    #{if count($relations) == 0}
+                    <tr><td colspan="8" style="text-align:center;color:#999;">暂无邀请关系</td></tr>
+                    #{/if}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="layui-card invite-section">
+            <div class="layui-card-header">最近奖励记录</div>
+            <div class="layui-card-body invite-table-wrap">
+                <table class="layui-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>用户ID</th>
+                        <th>身份</th>
+                        <th>触发</th>
+                        <th>类型</th>
+                        <th>内容</th>
+                        <th>状态</th>
+                        <th>发放时间</th>
+                        <th>备注</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    #{foreach $rewards as $item}
+                    <tr>
+                        <td>#{$item.id}</td>
+                        <td>#{$item.user_id}</td>
+                        <td>#{$item.role_text}</td>
+                        <td>#{$item.trigger_text}</td>
+                        <td>#{$item.reward_type_text}</td>
+                        <td>#{$item.reward_value}</td>
+                        <td>#{$item.status_text}</td>
+                        <td>#{$item.grant_time}</td>
+                        <td>#{$item.remark}</td>
+                    </tr>
+                    #{/foreach}
+                    #{if count($rewards) == 0}
+                    <tr><td colspan="9" style="text-align:center;color:#999;">暂无奖励记录</td></tr>
+                    #{/if}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+#{js([
+"/assets/common/js/jquery.min.js",
+"/assets/common/js/layer/layer.js",
+"/assets/common/js/layui/layui.js"
+])}
+</body>
+</html>

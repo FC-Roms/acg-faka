@@ -271,7 +271,7 @@ CREATE TABLE `acg_coupon`  (
                                      `use_life` int UNSIGNED NOT NULL DEFAULT 0 COMMENT '已使用次数',
                                      `race` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '商品类别',
                                      `sku` json DEFAULT NULL COMMENT 'SKU',
-                                     `user_limit` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '使用限制：0=不限，1=仅限绑定邮箱或手机号的新用户',
+                                     `user_limit` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '使用限制：0=不限，1=仅限绑定邮箱或手机号的新用户，2=登录会员每人限用一次',
                                      PRIMARY KEY (`id`) USING BTREE,
                                      UNIQUE INDEX `code`(`code` ASC) USING BTREE,
                                      INDEX `commodity_id`(`commodity_id` ASC) USING BTREE,

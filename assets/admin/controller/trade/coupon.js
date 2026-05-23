@@ -122,7 +122,7 @@
                             type: "radio",
                             dict: "_coupon_user_limit",
                             default: 0,
-                            placeholder: "选择新客限制后，仅已登录且绑定邮箱或手机号、未在本店支付过订单的会员可使用"
+                            placeholder: "可限制新客使用，或限制登录会员每人只能使用1次"
                         },
                         {
                             title: "面值(金额/百分比)",

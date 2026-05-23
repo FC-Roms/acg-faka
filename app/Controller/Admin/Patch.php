@@ -46,7 +46,7 @@ class Patch extends \App\Controller\Base\View\Manage
     {
         if (!Manager::schema()->hasColumn("coupon", "user_limit")) {
             Manager::schema()->table("coupon", function (Blueprint $blueprint) {
-                $blueprint->tinyInteger("user_limit")->unsigned()->default(0)->comment("使用限制：0=不限，1=仅限绑定邮箱或手机号的新用户")->after("sku");
+                $blueprint->tinyInteger("user_limit")->unsigned()->default(0)->comment("使用限制：0=不限，1=仅限绑定邮箱或手机号的新用户，2=登录会员每人限用一次")->after("sku");
                 $blueprint->index("user_limit");
             });
         }

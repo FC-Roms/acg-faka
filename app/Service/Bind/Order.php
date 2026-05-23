@@ -324,18 +324,30 @@ class Order implements \App\Service\Order
     }
 
     /**
-     * 校验优惠券是否仅限绑定联系方式的新用户使用。
-     * 新用户按当前店铺口径计算：该会员未在当前商品所属店铺完成过支付订单。
+     * 校验优惠券使用人群限制。
+     * 1=仅限绑定联系方式的新用户，2=登录会员每人限用一次。
      * @throws JSONException
      */
     private function validateCouponUserLimit(Coupon $coupon, Commodity $commodity, ?User $user): void
     {
-        if ((int)($coupon->user_limit ?? 0) !== 1) {
+        $userLimit = (int)($coupon->user_limit ?? 0);
+        if ($userLimit === 0) {
             return;
         }
 
         if (!$user) {
-            throw new JSONException("该优惠券仅限登录后绑定邮箱或手机号的新用户使用");
+            throw new JSONException($userLimit === 1 ? "该优惠券仅限登录后绑定邮箱或手机号的新用户使用" : "请先登录后再使用该优惠券");
+        }
+
+        if ($userLimit === 2) {
+            $hasUsedCoupon = \App\Model\Order::query()
+                ->where("owner", $user->id)
+                ->where("coupon_id", $coupon->id)
+                ->exists();
+            if ($hasUsedCoupon) {
+                throw new JSONException("该优惠券每个会员只能使用1次");
+            }
+            return;
         }
 
         $email = trim((string)($user->email ?? ""));
