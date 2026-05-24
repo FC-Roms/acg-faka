@@ -15,6 +15,7 @@ use App\Util\Date;
 use App\Util\Str;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Capsule\Manager;
+use Illuminate\Database\Schema\Blueprint;
 use Kernel\Annotation\Inject;
 use Kernel\Annotation\Interceptor;
 use Kernel\Exception\JSONException;
@@ -25,6 +26,31 @@ class Coupon extends Manage
 {
     #[Inject]
     private Query $query;
+
+    /**
+     * 自动补齐优惠券使用人群字段，避免首次使用时必须手动执行补丁。
+     * @return bool
+     * @throws JSONException
+     */
+    private function ensureUserLimitColumn(): bool
+    {
+        if (Manager::schema()->hasColumn("coupon", "user_limit")) {
+            return true;
+        }
+
+        try {
+            Manager::schema()->table("coupon", function (Blueprint $blueprint) {
+                $blueprint->tinyInteger("user_limit")->unsigned()->default(0)->comment("使用限制：0=不限，1=仅限绑定邮箱或手机号的新用户，2=登录会员每人限用一次")->after("sku");
+                $blueprint->index("user_limit");
+            });
+        } catch (\Throwable $throwable) {
+            if (!Manager::schema()->hasColumn("coupon", "user_limit")) {
+                throw new JSONException("自动创建优惠券使用人群字段失败，请手动执行数据库补丁");
+            }
+        }
+
+        return Manager::schema()->hasColumn("coupon", "user_limit");
+    }
 
     /**
      * @return array
@@ -82,6 +108,9 @@ class Coupon extends Manage
 
         if (!in_array($userLimit, [0, 1, 2], true)) {
             throw new JSONException("优惠券使用人群设置错误");
+        }
+        if ($userLimit !== 0) {
+            $this->ensureUserLimitColumn();
         }
         $hasUserLimitColumn = Manager::schema()->hasColumn("coupon", "user_limit");
         if ($userLimit !== 0 && !$hasUserLimitColumn) {

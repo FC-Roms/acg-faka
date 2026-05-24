@@ -1,0 +1,19 @@
+#{include file="../Common/Header.html"}
+<div class="mf-page-shell mf-page-shell-goods-admin" data-mf-controller="/assets/user/controller/business/commodity.js" data-mf-table="#commodity-table">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+        <section class="mf-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-box-open-full"></i> 商品管理</span>
+                <button type="button" class="layui-btn button-add">
+                    <i class="fa-duotone fa-regular fa-circle-plus"></i> 添加商品
+                </button>
+            </div>
+            <div class="mf-table-wrap">
+                <table id="commodity-table"></table>
+            </div>
+        </section>
+    </main>
+</div>
+#{ready("/assets/user/controller/business/commodity.js")}
+#{include file="../Common/Footer.html"}

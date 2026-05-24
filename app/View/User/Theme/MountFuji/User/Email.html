@@ -1,0 +1,42 @@
+#{include file="../Common/Header.html"}
+<div class="mf-page-shell mf-page-shell-security">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+        <section class="mf-panel">
+            #{include file="../Common/SecurityNav.html"}
+            <form class="layui-form form-data">
+                <div class="form-block">
+                    <div>
+                        <div class="form-header">当前邮箱</div>
+                        <div class="form-body">
+                            <input type="text" value="#{$user.email}" autocomplete="off" class="layui-input" placeholder="未绑定" disabled>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="form-header">新邮箱</div>
+                        <div class="form-body">
+                            <input type="text" name="email" autocomplete="off" class="layui-input" placeholder="请输入新邮箱">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="form-header">验证码</div>
+                        <div class="form-body mf-inline-form">
+                            <input type="text" name="email_captcha" autocomplete="off" class="layui-input" placeholder="邮箱验证码">
+                            <button type="button" class="layui-btn send-captcha">获取验证码</button>
+                        </div>
+                    </div>
+
+                    <div class="mf-page-actions mf-primary-action-bar mt-4">
+                        <button type="button" class="layui-btn layui-btn-pink save-data mf-primary-action-button">
+                            <i class="fa-duotone fa-regular fa-floppy-disk"></i> 保存修改
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+#{ready("/assets/user/controller/security/email.js")}
+#{include file="../Common/Footer.html"}

@@ -79,6 +79,14 @@
             安全中心
         </a>
     </li>
+    #{if is_dir(BASE_PATH . '/app/Plugin/InviteReward') and (int)(\App\Util\Plugin::getConfig('InviteReward')['STATUS'] ?? 0) == 1 and !\Kernel\Plugin\Hook::inst()->exist('InviteReward', \App\Consts\Hook::USER_VIEW_MENU, '\App\Plugin\InviteReward\Hook\Main', 'UserMenu')}
+    <li class="layui-nav-item #{if $title=='邀请奖励'} layui-this #{/if}">
+        <a href="/plugin/InviteReward/index/index">
+            <i class="layui-icon">&#xe612;</i>
+            邀请奖励
+        </a>
+    </li>
+    #{/if}
     <!--start::HOOK-->
     #{hook(\App\Consts\Hook::USER_VIEW_MENU)}
     <!--end::HOOK-->

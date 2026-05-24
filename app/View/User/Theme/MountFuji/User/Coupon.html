@@ -1,0 +1,23 @@
+#{include file="../Common/Header.html"}
+<div class="mf-page-shell mf-page-shell-goods-admin" data-mf-controller="/assets/user/controller/business/coupon.js" data-mf-table="#coupon-table">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+        <section class="mf-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-ticket-perforated"></i> 优惠券列表</span>
+            </div>
+            <div class="mf-toolbar">
+                <button type="button" class="layui-btn  button-add"><i class="fa-duotone fa-regular fa-circle-plus"></i> 生成优惠券</button>
+                <button type="button" class="layui-btn button-del"><i class="fa-duotone fa-regular fa-trash-can"></i> 移除选中</button>
+                <button type="button" class="layui-btn button-lock"><i class="fa-duotone fa-regular fa-lock-keyhole"></i> 锁定选中</button>
+                <button type="button" class="layui-btn button-unlock"><i class="fa-duotone fa-regular fa-lock-open"></i> 解锁选中</button>
+                <button type="button" class="layui-btn button-export"><i class="fa-duotone fa-regular fa-file-export"></i> 导出筛选</button>
+            </div>
+            <div class="mf-table-wrap">
+                <table id="coupon-table"></table>
+            </div>
+        </section>
+    </main>
+</div>
+#{ready("/assets/user/controller/business/coupon.js")}
+#{include file="../Common/Footer.html"}

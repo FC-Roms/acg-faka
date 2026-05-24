@@ -1,0 +1,16 @@
+#{include file="../Common/Header.html"}
+<div class="mf-page-shell" data-mf-controller="/assets/user/controller/business/order.js" data-mf-table="#order-table">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+        <section class="mf-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-truck-fast"></i> 订单列表</span>
+            </div>
+            <div class="mf-table-wrap">
+                <table id="order-table"></table>
+            </div>
+        </section>
+    </main>
+</div>
+#{ready("/assets/user/controller/business/order.js")}
+#{include file="../Common/Footer.html"}

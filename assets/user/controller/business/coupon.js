@@ -120,7 +120,11 @@
                             title: "使用人群",
                             name: "user_limit",
                             type: "radio",
-                            dict: "_coupon_user_limit",
+                            dict: [
+                                {id: 0, name: "不限"},
+                                {id: 1, name: "新客绑定邮箱/手机"},
+                                {id: 2, name: "登录会员每人1次"}
+                            ],
                             default: 0,
                             placeholder: "可限制新客使用，或限制登录会员每人只能使用1次"
                         },

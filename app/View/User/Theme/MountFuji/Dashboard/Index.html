@@ -1,0 +1,107 @@
+#{include file="../Common/Header.html"}
+<div class="mf-page-shell">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+
+        <section class="mf-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-chart-line-up"></i> 我的资产</span>
+            </div>
+            <div class="mf-kpi-grid">
+                <div class="mf-kpi-card">
+                    <span>账户余额</span>
+                    <strong>￥#{$user.balance}</strong>
+                </div>
+                <div class="mf-kpi-card">
+                    <span>当前硬币</span>
+                    <strong>#{$user.coin}</strong>
+                </div>
+                <div class="mf-kpi-card">
+                    <span>总充值</span>
+                    <strong>￥#{$user.recharge}</strong>
+                </div>
+                <div class="mf-kpi-card">
+                    <span>累计硬币收入</span>
+                    <strong>￥#{$user.total_coin}</strong>
+                </div>
+                #{if $user.businessLevel}
+                    <div class="mf-kpi-card">
+                        <span>今日收入</span>
+                        <strong>￥#{$today_income}</strong>
+                    </div>
+                    <div class="mf-kpi-card">
+                        <span>昨日收入</span>
+                        <strong>￥#{$yesterday_income}</strong>
+                    </div>
+                    <div class="mf-kpi-card">
+                        <span>本周收入</span>
+                        <strong>￥#{$week_income}</strong>
+                    </div>
+                    <div class="mf-kpi-card">
+                        <span>总交易额</span>
+                        <strong>￥#{$trade}</strong>
+                    </div>
+                #{/if}
+            </div>
+        </section>
+
+
+        <section class="mf-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-link"></i> 推广返佣</span>
+            </div>
+            <div class="mf-info-grid">
+                <dl class="mf-info-card">
+                    <dt>商户密钥</dt>
+                    <dd>
+                        <span class="app-key">#{$user.app_key}</span>
+                        <span class="reset-key" style="margin-left:10px;">重置</span>
+                    </dd>
+                </dl>
+
+
+                <dl class="mf-info-card">
+                    <dt>商户 ID</dt>
+                    <dd><span class="mf-pill">#{$user.id}</span></dd>
+                </dl>
+
+                <dl class="mf-info-card">
+                    <dt>推广链接</dt>
+                    <dd><a class="clipboard" data-text="#{$share_url}">#{$share_url}</a></dd>
+                </dl>
+                <dl class="mf-info-card">
+                    <dt>推广人数</dt>
+                    <dd>#{$children}</dd>
+                </dl>
+            </div>
+        </section>
+
+        <section class="mf-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-satellite-dish"></i> 账户情报</span>
+            </div>
+            <div class="mf-info-grid">
+                <dl class="mf-info-card">
+                    <dt>当前登录 IP</dt>
+                    <dd>#{$user.login_ip}</dd>
+                </dl>
+                <dl class="mf-info-card">
+                    <dt>当前登录时间</dt>
+                    <dd>#{$user.login_time}</dd>
+                </dl>
+                <dl class="mf-info-card">
+                    <dt>上次登录 IP</dt>
+                    <dd>#{if $user.last_login_ip}#{$user.last_login_ip}#{if $user.login_ip != $user.last_login_ip} <span class="text-danger">(异地登录)</span>#{/if}#{else}-#{/if}</dd>
+                </dl>
+                <dl class="mf-info-card">
+                    <dt>上次登录时间</dt>
+                    <dd>#{if $user.last_login_time}#{$user.last_login_time}#{else}-#{/if}</dd>
+                </dl>
+
+            </div>
+        </section>
+
+    </main>
+</div>
+#{ready("/assets/user/controller/dashboard/index.js")}
+#{include file="../Common/Footer.html"}

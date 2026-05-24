@@ -105,11 +105,13 @@ class Plugin extends Manage
         $config = $plugin[\App\Consts\Plugin::PLUGIN_CONFIG];
 
         if (isset($map['STATUS'])) {
-            if ((int)$config['STATUS'] == 0 && $map['STATUS'] == 1) {
+            if ((int)$map['STATUS'] == 1) {
                 _plugin_start($id);
+                $this->syncPluginStatus($id, $config, 1);
                 return $this->json(200, "插件已启动");
-            } else if ((int)$config['STATUS'] == 1 && $map['STATUS'] == 0) {
+            } else if ((int)$map['STATUS'] == 0) {
                 _plugin_stop($id);
+                $this->syncPluginStatus($id, $config, 0);
                 return $this->json(200, "插件已停止");
             }
         }
@@ -124,6 +126,19 @@ class Plugin extends Manage
         $configFile = BASE_PATH . '/app/Plugin/' . $id . '/Config/Config.php';
         setConfig($config, $configFile);
         return $this->json(200, '配置已生效');
+    }
+
+    /**
+     * @param string $id
+     * @param array $config
+     * @param int $status
+     * @return void
+     */
+    private function syncPluginStatus(string $id, array $config, int $status): void
+    {
+        $config['STATUS'] = (string)$status;
+        $configFile = BASE_PATH . '/app/Plugin/' . $id . '/Config/Config.php';
+        setConfig($config, $configFile);
     }
 
     /**

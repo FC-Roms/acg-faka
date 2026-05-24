@@ -1,0 +1,157 @@
+<aside class="mf-sidebar">
+    <div class="mf-sidebar-card">
+        <div class="mf-sidebar-profile">
+            <div class="mf-user-chip" style="justify-content:flex-start;padding:0;border:0;background:none;">
+                <img src="#{$user.avatar}" alt="#{$user.username}" onerror="this.src='#{$favicon}'">
+                <span class="mf-user-meta">
+                    <strong>#{$user.username}</strong>
+                    <span>UID #{$user.id}</span>
+                </span>
+            </div>
+            <div class="mf-sidebar-badges">
+                <span class="mf-pill"><i class="fa-duotone fa-regular fa-wallet"></i> 余额 ￥#{$user.balance}</span>
+                <span class="mf-pill"><i class="fa-duotone fa-regular fa-coins"></i> 硬币 #{$user.coin}</span>
+            </div>
+        </div>
+    </div>
+
+    <nav class="mf-sidebar-card">
+        <div class="mf-side-nav layui-nav-tree">
+            <div class="mf-nav-group">
+                <div class="mf-nav-group-label">概览</div>
+                <ul class="mf-side-nav">
+                    <li class="mf-nav-item #{if $title=='个人主页'}is-active#{/if}">
+                        <a href="/user/dashboard/index">
+                            <i class="fa-duotone fa-regular fa-compass-drafting"></i>
+                            <span class="mf-nav-copy">
+                                <strong>控制台</strong>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="mf-nav-item #{if $title=='充值中心'}is-active#{/if}">
+                        <a href="/user/recharge/index">
+                            <i class="fa-duotone fa-regular fa-circle-dollar"></i>
+                            <span class="mf-nav-copy">
+                                <strong>充值中心</strong>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="mf-nav-item #{if $title=='购买记录'}is-active#{/if}">
+                        <a href="/user/personal/purchaseRecord">
+                            <i class="fa-duotone fa-regular fa-receipt"></i>
+                            <span class="mf-nav-copy">
+                                <strong>购买记录</strong>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="mf-nav-item #{if $title=='我的账单'}is-active#{/if}">
+                        <a href="/user/bill/index">
+                            <i class="fa-duotone fa-regular fa-scroll"></i>
+                            <span class="mf-nav-copy">
+                                <strong>我的账单</strong>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="mf-nav-group">
+                <div class="mf-nav-group-label">经营</div>
+                <ul class="mf-side-nav">
+                    <li class="mf-nav-item #{if $title=='我的店铺'}is-active#{/if}">
+                        <a href="/user/business/index">
+                            <i class="fa-duotone fa-regular fa-store"></i>
+                            <span class="mf-nav-copy">
+                                <strong>我的店铺</strong>
+                            </span>
+                        </a>
+                    </li>
+                    #{if $user.businessLevel and $user.businessLevel.supplier == 1}
+                        <li class="mf-nav-item #{if $title=='商品分类'}is-active#{/if}">
+                            <a href="/user/category/index">
+                                <i class="fa-duotone fa-regular fa-layer-group"></i>
+                                <span class="mf-nav-copy">
+                                    <strong>商品分类</strong>
+                                </span>
+                            </a>
+                        </li>
+                        <li class="mf-nav-item #{if $title=='我的商品'}is-active#{/if}">
+                            <a href="/user/commodity/index">
+                                <i class="fa-duotone fa-regular fa-box-open-full"></i>
+                                <span class="mf-nav-copy">
+                                    <strong>我的商品</strong>
+                                </span>
+                            </a>
+                        </li>
+                        <li class="mf-nav-item #{if $title=='卡密管理'}is-active#{/if}">
+                            <a href="/user/card/index">
+                                <i class="fa-duotone fa-regular fa-key-skeleton"></i>
+                                <span class="mf-nav-copy">
+                                    <strong>卡密管理</strong>
+                                </span>
+                            </a>
+                        </li>
+                        <li class="mf-nav-item #{if $title=='代卷管理'}is-active#{/if}">
+                            <a href="/user/coupon/index">
+                                <i class="fa-duotone fa-regular fa-ticket-perforated"></i>
+                                <span class="mf-nav-copy">
+                                    <strong>代券管理</strong>
+                                </span>
+                            </a>
+                        </li>
+                        <li class="mf-nav-item #{if $title=='商品订单'}is-active#{/if}">
+                            <a href="/user/order/index">
+                                <i class="fa-duotone fa-regular fa-truck-fast"></i>
+                                <span class="mf-nav-copy">
+                                    <strong>商品订单</strong>
+                                </span>
+                            </a>
+                        </li>
+                    #{/if}
+                </ul>
+            </div>
+
+            <div class="mf-nav-group">
+                <div class="mf-nav-group-label">账户</div>
+                <ul class="mf-side-nav">
+                    <li class="mf-nav-item #{if $title=='硬币兑现' or $title=='兑现记录'}is-active#{/if}">
+                        <a href="/user/cash/index">
+                            <i class="fa-duotone fa-regular fa-hand-holding-dollar"></i>
+                            <span class="mf-nav-copy">
+                                <strong>硬币兑现</strong>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="mf-nav-item #{if $title=='我的下级'}is-active#{/if}">
+                        <a href="/user/agent/member">
+                            <i class="fa-duotone fa-regular fa-users-viewfinder"></i>
+                            <span class="mf-nav-copy">
+                                <strong>我的下级</strong>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            #{if is_dir(BASE_PATH . '/app/Plugin/InviteReward') and (int)(\App\Util\Plugin::getConfig('InviteReward')['STATUS'] ?? 0) == 1 and !\Kernel\Plugin\Hook::inst()->exist('InviteReward', \App\Consts\Hook::USER_VIEW_MENU, '\App\Plugin\InviteReward\Hook\Main', 'UserMenu')}
+            <div class="mf-nav-group">
+                <div class="mf-nav-group-label">邀请</div>
+                <ul class="mf-side-nav">
+                    <li class="mf-nav-item #{if $title=='邀请奖励'}is-active#{/if}">
+                        <a href="/plugin/InviteReward/index/index">
+                            <i class="fa-duotone fa-regular fa-user-plus"></i>
+                            <span class="mf-nav-copy">
+                                <strong>邀请奖励</strong>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            #{/if}
+
+            <!--start::HOOK-->
+            #{hook(\App\Consts\Hook::USER_VIEW_MENU)}
+            <!--end::HOOK-->
+        </div>
+    </nav>
+</aside>

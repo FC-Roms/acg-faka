@@ -82,6 +82,20 @@
             <div class="layui-card-body">
                 <table class="layui-table">
                     <tbody>
+                    #{foreach $reward_config as $item}
+                    <tr>
+                        <td style="width:180px;">#{$item.role}</td>
+                        <td style="width:120px;">#{$item.type}</td>
+                        <td>#{$item.content}</td>
+                    </tr>
+                    #{/foreach}
+                    #{if count($reward_config) == 0}
+                    <tr><td colspan="3" style="text-align:center;color:#999;">暂无已启用奖励</td></tr>
+                    #{/if}
+                    </tbody>
+                </table>
+                <table class="layui-table" style="display:none;">
+                    <tbody>
                     <tr>
                         <td style="width:180px;">邀请人触发</td>
                         <td>#{$plugin_config.inviter_reward_trigger}</td>

@@ -1,0 +1,24 @@
+#{include file="../Common/Header.html"}
+<div class="mf-page-shell mf-page-shell-goods-admin" data-mf-controller="/assets/user/controller/business/card.js" data-mf-table="#user-card-table">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+        <section class="mf-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-key-skeleton"></i> 卡密管理</span>
+            </div>
+            <div class="mf-toolbar">
+                <button type="button" class="layui-btn  button-add"><i class="fa-duotone fa-regular fa-cloud-arrow-up"></i> 上传卡密</button>
+                <button type="button" class="layui-btn button-del"><i class="fa-duotone fa-regular fa-trash-can"></i> 移除选中</button>
+                <button type="button" class="layui-btn button-lock"><i class="fa-duotone fa-regular fa-lock-hashtag"></i> 锁定选中</button>
+                <button type="button" class="layui-btn button-unlock"><i class="fa-duotone fa-regular fa-unlock-keyhole"></i> 解锁选中</button>
+                <button type="button" class="layui-btn button-sell"><i class="fa-duotone fa-regular fa-arrows-spin"></i> 标记已出售</button>
+                <button type="button" class="layui-btn button-export"><i class="fa-duotone fa-regular fa-down-to-line"></i> 导出筛选</button>
+            </div>
+            <div class="mf-table-wrap">
+                <table id="user-card-table"></table>
+            </div>
+        </section>
+    </main>
+</div>
+#{ready("/assets/user/controller/business/card.js")}
+#{include file="../Common/Footer.html"}

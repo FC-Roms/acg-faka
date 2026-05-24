@@ -1,0 +1,336 @@
+#{include file="../Common/Header.html"}
+#{set_script_var([
+    "_business_notice_var" => $business.notice
+])}
+<div class="mf-page-shell mf-page-shell-business">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+        <section class="mf-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-store"></i> 店铺配置</span>
+            </div>
+
+            #{if !$business || $purchase == 1 && $business}
+                <form class="layui-form mf-business-purchase-form">
+                    <div class="form-block mf-business-purchase-shell">
+                        <section class="mf-business-purchase-hero">
+                            <div class="mf-business-purchase-copy">
+                                <span class="mf-business-purchase-kicker">#{if !$business}Store Opening#{/if}#{if $purchase == 1}Level Upgrade#{/if}</span>
+                                <h2 class="mf-business-purchase-title">#{if !$business}开通你的店铺#{/if}#{if $purchase == 1}升级你的店铺#{/if}</h2>
+                                <p class="mf-business-purchase-description">
+                                    #{if !$business}选择合适的套餐后即可开通分站，快速开始经营自己的店铺。#{/if}
+                                    #{if $purchase == 1}切换到更高等级，解锁独立域名、供货权限和更完整的经营能力。#{/if}
+                                </p>
+                                <div class="mf-business-purchase-pills">
+                                    <span><i class="fa-duotone fa-regular fa-circle-check"></i> 分站返佣</span>
+                                    <span><i class="fa-duotone fa-regular fa-globe"></i> 独立域名</span>
+                                    <span><i class="fa-duotone fa-regular fa-box-open-full"></i> 供货权限</span>
+                                </div>
+                            </div>
+
+                            #{if $purchase == 1 && $business}
+                                <div class="mf-business-purchase-state">
+                                    <span class="mf-business-purchase-state-label">当前等级</span>
+                                    <div class="mf-business-purchase-state-main">
+                                        <span class="mf-business-purchase-state-icon">
+                                            <img src="#{$user.businessLevel.icon}" alt="#{$user.businessLevel.name}" onerror="this.src='#{$favicon}'">
+                                        </span>
+                                        <div>
+                                            <strong>#{$user.businessLevel.name}</strong>
+                                            <p>终身可用</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            #{/if}
+                        </section>
+
+                        <div class="mf-business-purchase-section">
+                            <div class="form-header mf-business-purchase-heading">
+                                <div>
+                                    <span class="mf-business-purchase-heading-title">选择套餐</span>
+                                    <p class="mf-business-purchase-heading-text">选中一个套餐后即可#{if !$business}开通店铺#{/if}#{if $purchase == 1}升级店铺#{/if}。</p>
+                                </div>
+                            </div>
+                            <div class="form-body">
+                                <div class="mf-choice-grid mf-business-plan-grid">
+                                    #{foreach $level as $le}
+                                        <a class="business-group mf-business-plan" data-id="#{$le.id}" href="javascript:void(0);">
+                                            <span class="mf-business-plan-badge">
+                                                <i class="fa-duotone fa-regular fa-store"></i>
+                                                店铺套餐
+                                            </span>
+                                            <div class="mf-level-top">
+                                                <span class="mf-level-icon-shell">
+                                                    <img src="#{$le.icon}" alt="#{$le.name}">
+                                                </span>
+                                                <div class="mf-level-main">
+                                                    <strong>#{$le.name}</strong>
+                                                    <div class="mf-muted">终身可用</div>
+                                                </div>
+                                                <span class="mf-level-price">
+                                                    <small>价格</small>
+                                                    <b>¥#{$le.price}</b>
+                                                </span>
+                                            </div>
+                                            <hr>
+                                            <ul class="mf-feature-list">
+                                                <li><span>分站功能</span><b class="#{if $le.substation == 1}text-success#{else}text-danger#{/if}">#{if $le.substation == 1}支持#{else}不支持#{/if}</b></li>
+                                                <li><span>分站返佣</span><b class="text-success">支持</b></li>
+                                                <li><span>独立域名</span><b class="#{if $le.top_domain == 1}text-success#{else}text-danger#{/if}">#{if $le.top_domain == 1}支持#{else}不支持#{/if}</b></li>
+                                                <li><span>供货权限</span><b class="#{if $le.supplier == 1}text-success#{else}text-danger#{/if}">#{if $le.supplier == 1}支持#{else}不支持#{/if}</b></li>
+                                                <li><span>供货手续费</span><b class="#{if $le.supplier == 1}mf-quote-accent#{else}mf-muted#{/if}">#{if $le.supplier == 1}#{$le.cost*100}%#{else}-#{/if}</b></li>
+                                            </ul>
+                                        </a>
+                                    #{/foreach}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="elem-tips mf-business-purchase-note">
+                            <div class="mf-business-purchase-note-head">
+                                <i class="fa-duotone fa-regular fa-circle-info"></i>
+                                <span>权益说明</span>
+                            </div>
+                            <ul class="mf-note-list mf-business-note-list">
+                                <li>分站返佣：售出主站商品后，按成交价与拿货价的差额返佣。</li>
+                                <li>独立域名：开通后可绑定自己的顶级域名，不再局限系统分配子域名。</li>
+                                <li>供货权限：支持自建分类、上架商品，并由主站协助售卖。</li>
+                                <li>供货手续费：对自主上架商品的成功订单按比例收取手续费。</li>
+                            </ul>
+                        </div>
+
+                        <div class="mf-page-actions mf-business-purchase-actions">
+                            <button type="button" class="layui-btn layui-btn-pink payButton mf-business-submit-button">
+                                <i class="fa-duotone fa-regular fa-bolt"></i>
+                                #{if !$business}立即开通店铺#{/if}#{if $purchase == 1}立即升级店铺#{/if}
+                            </button>
+                            #{if $purchase == 1}
+                                <a href="/user/business/index" class="layui-btn mf-business-secondary-button">
+                                    <i class="fa-duotone fa-regular fa-arrow-left"></i>
+                                    返回店铺
+                                </a>
+                            #{/if}
+                        </div>
+                    </div>
+                </form>
+            #{else}
+                #{if $user.businessLevel.substation == 1}
+                    <blockquote class="elem-quote mf-business-note">
+                        <div class="mf-business-note-item is-level">
+                            <span class="mf-business-note-label">
+                                <i class="fa-duotone fa-regular fa-store"></i>
+                                商户等级 #{if count($level) > 0}
+                                    <a href="/user/business/index?purchase=1" class="mf-business-note-link">
+                                    <i class="fa-duotone fa-regular fa-arrow-up-right-from-square"></i>
+                                    我要升级
+                                </a>
+                                #{/if}
+                            </span>
+                            <strong class="mf-business-note-value">#{$user.businessLevel.name}</strong>
+                        </div>
+
+                        <div class="mf-business-note-item">
+                            <span class="mf-business-note-label">
+                                <i class="fa-duotone fa-regular fa-globe"></i>
+                                独立域名
+                            </span>
+                            <strong class="mf-business-note-value #{if $user.businessLevel.top_domain == 1}text-success#{else}text-danger#{/if}">
+                                #{if $user.businessLevel.top_domain == 1}支持#{else}不支持#{/if}
+                            </strong>
+                        </div>
+
+                        <div class="mf-business-note-item">
+                            <span class="mf-business-note-label">
+                                <i class="fa-duotone fa-regular fa-box-open-full"></i>
+                                供货权限
+                            </span>
+                            <strong class="mf-business-note-value #{if $user.businessLevel.supplier == 1}text-success#{else}text-danger#{/if}">
+                                #{if $user.businessLevel.supplier == 1}支持#{else}不支持#{/if}
+                            </strong>
+                        </div>
+
+                        <div class="mf-business-note-item">
+                            <span class="mf-business-note-label">
+                                <i class="fa-duotone fa-regular fa-percent"></i>
+                                供货手续费
+                            </span>
+                            <strong class="mf-business-note-value #{if $user.businessLevel.supplier == 1}mf-quote-accent#{else}mf-muted#{/if}">
+                                #{if $user.businessLevel.supplier == 1}#{$user.businessLevel.cost*100}%#{else}-#{/if}
+                            </strong>
+                        </div>
+                    </blockquote>
+
+                    <form class="layui-form form-data">
+                        <div class="mf-business-tabs" data-mf-business-tabs>
+                            <button type="button" class="mf-business-tab-trigger is-active" data-mf-business-tab-trigger="basic">
+                                <i class="fa-duotone fa-regular fa-sliders"></i>
+                                基本设置
+                            </button>
+                            <button type="button" class="mf-business-tab-trigger" data-mf-business-tab-trigger="product">
+                                <i class="fa-duotone fa-regular fa-box-open-full"></i>
+                                商品设置
+                            </button>
+                        </div>
+
+                        <section class="mf-business-tab-panel mf-page-shell-security is-active" data-mf-business-tab-panel="basic">
+                            <div class="form-block">
+                                <div>
+                                    <div class="form-header">店铺名称</div>
+                                    <div class="form-body">
+                                        <input type="text" value="#{$business.shop_name}" name="shop_name" required autocomplete="off" placeholder="请输入店铺名称" class="layui-input">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="form-header">网站标题</div>
+                                    <div class="form-body">
+                                        <input type="text" value="#{$business.title}" name="title" required autocomplete="off" placeholder="用于显示浏览器标题" class="layui-input">
+                                    </div>
+                                </div>
+
+
+
+                                <div>
+                                    <div class="form-header">
+                                        子域名
+                                        #{if $business.subdomain}
+                                            <span class="mf-business-domain-status">
+                                                <i class="fa-duotone fa-regular fa-circle-check"></i>
+                                                已绑定
+                                            </span>
+                                            <a href="javascript:void(0);" class="unbind-subdomain mf-business-domain-action">
+                                                <i class="fa-duotone fa-regular fa-link-slash"></i>
+                                                解绑
+                                            </a>
+                                        #{/if}
+                                    </div>
+                                    <div class="form-body">
+                                        <div class="mf-domain-row">
+                                            <input type="text"
+                                                   value="#{$business.subdomain}"
+                                                   name="subdomain"
+                                                   required
+                                                   autocomplete="off"
+                                                   placeholder="输入子域名前缀"
+                                                   class="layui-input"
+                                                   #{if $business.subdomain}disabled#{/if}>
+                                            <select name="suffix" #{if $business.subdomain}disabled#{/if}>
+                                                #{foreach $domain as $d}
+                                                    <option value="#{$d}">.#{$d}</option>
+                                                #{/foreach}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                #{if $user.businessLevel.top_domain == 1}
+                                    <div>
+                                        <div class="form-header">
+                                            独立域名
+                                            #{if $business.topdomain}
+                                                <a href="javascript:void(0);" class="unbind-topdomain">解绑</a>
+                                                [#{if gethostbyname($config.cname) == gethostbyname($business.topdomain)}
+                                                <b class="text-success">解析正常</b>
+                                            #{else}
+                                                <b class="text-danger">未检测到解析</b>
+                                            #{/if}]
+                                            #{/if}
+                                            <span class="mf-muted">CNAME：#{$config.cname}</span>
+                                        </div>
+                                        <div class="form-body">
+                                            <input type="text"
+                                                   value="#{$business.topdomain}"
+                                                   name="topdomain"
+                                                   required
+                                                   autocomplete="off"
+                                                   placeholder="绑定独立域名"
+                                                   class="layui-input"
+                                                   #{if $business.topdomain}disabled#{/if}>
+                                        </div>
+                                    </div>
+                                #{/if}
+
+                                <div>
+                                    <div class="form-header">显示主站商品 [全局]</div>
+                                    <div class="form-body">
+                                        <input type="checkbox" name="master_display" title="开启" value="1" #{if $business.master_display == 1}checked#{/if}>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="form-header">店铺公告</div>
+                                    <div class="form-body">
+                                        <div class="editor-wrapper">
+                                            <div>
+                                                <button data-type="0" class="button-switch-notice" type="button">
+                                                    <i class="fa-duotone fa-regular fa-code me-1"></i>HTML
+                                                </button>
+                                            </div>
+                                            <div class="editor-content">
+                                                <div class="toolbar-container"></div>
+                                                <div class="editor-container"></div>
+                                            </div>
+                                            <textarea class="text-container" style="display:none;" name="notice"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="mf-page-actions mf-primary-action-bar mt-4">
+                                    <button type="button" class="layui-btn layui-btn-pink save-config mf-primary-action-button">
+                                        <i class="fa-duotone fa-regular fa-floppy-disk"></i> 保存设置
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="mf-business-tab-panel" data-mf-business-tab-panel="product">
+                            <div class="form-block">
+                                <div>
+                                    <div class="form-header">
+                                        <span class="a-badge a-badge-success category-show mf-business-visibility-toggle" data-state="1" style="cursor:pointer;">
+                                            <i class="fa-duotone fa-regular fa-eye"></i>
+                                            <span>全部显示</span>
+                                        </span>
+                                        <span class="a-badge a-badge-danger category-show mf-business-visibility-toggle" data-state="0" style="cursor:pointer;">
+                                            <i class="fa-duotone fa-regular fa-eye-slash"></i>
+                                            <span>全部隐藏</span>
+                                        </span>
+                                    </div>
+                                    <div class="form-body mf-table-wrap">
+                                        <table id="master_category" lay-filter="master_category"></table>
+                                    </div>
+                                </div>
+
+                                <div data-mf-business-commodity-anchor></div>
+                                <div data-mf-business-commodity-section>
+                                    <div class="form-header">
+                                        <a id="commodity"></a>
+                                        <span class="a-badge a-badge-success commodity-show mf-business-visibility-toggle" data-state="1" style="cursor:pointer;">
+                                            <i class="fa-duotone fa-regular fa-eye"></i>
+                                            <span>全部显示</span>
+                                        </span>
+                                        <span class="a-badge a-badge-danger commodity-show mf-business-visibility-toggle" data-state="0" style="cursor:pointer;">
+                                            <i class="fa-duotone fa-regular fa-eye-slash"></i>
+                                            <span>全部隐藏</span>
+                                        </span>
+                                        <span class="a-badge a-badge-primary commodity-premium" style="cursor:pointer;">批量加价</span>
+                                    </div>
+                                    <div class="form-body mf-table-wrap">
+                                        <table id="master_commodity" lay-filter="master_commodity"></table>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </form>
+                #{else}
+                    <blockquote class="elem-quote">
+                        您当前商户等级暂不支持店铺功能，<a href="/user/business/index?purchase=1" class="text-link">立即升级</a>
+                    </blockquote>
+                #{/if}
+            #{/if}
+        </section>
+    </main>
+</div>
+#{ready("/assets/user/controller/business/business.js")}
+#{include file="../Common/Footer.html"}

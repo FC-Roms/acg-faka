@@ -1,0 +1,363 @@
+#{include file="../Common/Header.html"}
+<style>
+    .mf-page-shell-record[data-mf-record-layout="native"] .mf-page-hero {
+        margin-bottom: 14px;
+        padding: 22px 26px;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .mf-panel {
+        padding: 14px 16px 8px;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] {
+        --MfRecordRowHeight: 36px;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-views,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .fixed-table-container .table tbody tr .card-views {
+        display: block !important;
+        margin: 0 0 12px !important;
+        padding: 12px 16px !important;
+        border: 1px solid var(--mf-line-soft) !important;
+        border-radius: 22px !important;
+        background: var(--mf-bg-elevated) !important;
+        box-shadow: 0 6px 14px rgba(149, 157, 165, 0.08) !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-views::before,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-views::after,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .fixed-table-container .table tbody tr .card-views::before,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .fixed-table-container .table tbody tr .card-views::after {
+        display: none !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .fixed-table-container .table tbody tr .card-view {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        align-self: stretch !important;
+        gap: 8px !important;
+        margin: 0 !important;
+        padding: 4px 0 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: var(--MfRecordRowHeight) !important;
+        border: none !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(1),
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(2),
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(3),
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(4),
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(5),
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(6),
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(7),
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(8),
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(9),
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(10),
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(11) {
+        position: static !important;
+        order: initial !important;
+        grid-column: auto !important;
+        justify-self: auto !important;
+        align-self: stretch !important;
+        min-width: 0 !important;
+        width: 100% !important;
+        min-height: var(--MfRecordRowHeight) !important;
+        padding: 4px 0 !important;
+        overflow: visible !important;
+        border: none !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        text-align: left !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(10),
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(11) {
+        min-height: 0 !important;
+        padding: 8px 0 !important;
+        align-items: stretch !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(5)::after {
+        display: none !important;
+        content: none !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view + .card-view,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .fixed-table-container .table tbody tr .card-view + .card-view {
+        border-top: 1px dashed var(--mf-line-soft) !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view.is-mf-hidden {
+        display: none !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view .card-view-title,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view .title {
+        flex: 0 0 68px !important;
+        min-width: 68px !important;
+        width: 68px !important;
+        margin: 0 !important;
+        color: #a26880 !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        line-height: 1.15 !important;
+        text-align: left !important;
+        align-self: center !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(2) .card-view-title {
+        display: block !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view .card-view-value,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view .value {
+        width: auto !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+        color: var(--mf-text) !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        line-height: 1.15 !important;
+        text-align: left !important;
+        word-break: break-word !important;
+        flex: 1 1 auto !important;
+        align-self: center !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(1) .card-view-value {
+        font-family: var(--mf-font-mono) !important;
+        color: var(--mf-text-secondary) !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.01em !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(2) .card-view-value {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        width: auto !important;
+        min-height: 0 !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(2) .table-item {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: auto !important;
+        max-width: 100% !important;
+        min-height: 26px !important;
+        padding: 2px 8px 2px 4px !important;
+        border: 1px solid var(--mf-line-soft) !important;
+        border-radius: 999px !important;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(2) .table-item:hover {
+        transform: none !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(2) .table-item-icon {
+        width: 20px !important;
+        height: 20px !important;
+        margin: 0 !important;
+        border-radius: 6px !important;
+        object-fit: cover !important;
+        box-shadow: 0 2px 6px rgba(149, 157, 165, 0.09) !important;
+        flex: 0 0 20px !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(2) .table-item-name {
+        color: var(--mf-text) !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        line-height: 1.05 !important;
+        text-shadow: none !important;
+        white-space: nowrap !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(5) .card-view-value,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(5) .card-view-value span {
+        color: #10a475 !important;
+        font-size: 15px !important;
+        font-weight: 800 !important;
+        line-height: 1.1 !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(5) .card-view-value {
+        width: auto !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(6) .card-view-value,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(8) .card-view-value,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(9) .card-view-value {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 5px !important;
+        align-items: center !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(6) .a-badge,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(8) .a-badge,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(9) .a-badge {
+        padding: 3px 8px !important;
+        border-radius: 999px !important;
+        box-shadow: none !important;
+        font-size: 10px !important;
+        line-height: 1.05 !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(7) .pay-item {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(7) .pay-item:hover {
+        transform: none !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(7) .pay-item img {
+        width: 13px !important;
+        height: 13px !important;
+        border-radius: 50% !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(7) .pay-item span {
+        color: var(--mf-text) !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        text-shadow: none !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(10) .card-view-value,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(11) .card-view-value {
+        font-size: 12px !important;
+        font-weight: 500 !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(10),
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(11) {
+        display: block !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(10) .card-view-title,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(11) .card-view-title {
+        display: block !important;
+        width: auto !important;
+        min-width: 0 !important;
+        margin-bottom: 6px !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(10) .card-view-value,
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(11) .card-view-value {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(10) .card-view-value {
+        color: var(--mf-text-secondary) !important;
+        font-size: 14px !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(11) .secret {
+        width: 480px !important;
+        min-height: 64px !important;
+        height: 64px !important;
+        padding: 8px 10px !important;
+        border: 1px solid var(--mf-line-soft) !important;
+        border-radius: 14px !important;
+        background: var(--mf-bg-soft) !important;
+        box-shadow: none !important;
+        color: var(--mf-text-secondary) !important;
+        font-size: 11px !important;
+        line-height: 1.35 !important;
+        resize: none !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(11) .card-view-value > div {
+        display: flex !important;
+        justify-content: flex-start !important;
+        margin-top: 6px !important;
+        text-align: left !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(11) .secret-download {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        min-height: 34px !important;
+        padding: 0 12px !important;
+        border-radius: 11px !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+    }
+
+    .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(11) .secret-download .layui-icon {
+        font-size: 13px !important;
+    }
+
+    @media (max-width: 767px) {
+        .mf-page-shell-record[data-mf-record-layout="native"] .mf-page-hero {
+            padding: 18px 16px;
+        }
+
+        .mf-page-shell-record[data-mf-record-layout="native"] .mf-panel {
+            padding: 12px 10px 6px;
+        }
+
+        .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-views,
+        .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .fixed-table-container .table tbody tr .card-views {
+            padding: 12px !important;
+            border-radius: 18px !important;
+        }
+
+        .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view,
+        .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .fixed-table-container .table tbody tr .card-view {
+            flex-direction: column !important;
+            gap: 4px !important;
+            min-height: 0 !important;
+            padding: 8px 0 !important;
+            align-items: flex-start !important;
+        }
+
+        .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view .card-view-title,
+        .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view .title {
+            flex: none !important;
+            width: auto !important;
+            min-width: 0 !important;
+        }
+
+        .mf-page-shell-record[data-mf-record-layout="native"] .bootstrap-table .card-view:nth-child(11) .card-view-value > div {
+            text-align: left !important;
+        }
+    }
+</style>
+<div class="mf-page-shell mf-page-shell-record" data-mf-controller="/assets/user/controller/user/purchase.record.js" data-mf-table="#bill-table" data-mf-record-layout="native">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+        <section class="mf-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-receipt"></i> 购买记录</span>
+            </div>
+            <div class="mf-table-wrap">
+                <table id="bill-table"></table>
+            </div>
+        </section>
+    </main>
+</div>
+#{ready("/assets/user/controller/user/purchase.record.js")}
+#{include file="../Common/Footer.html"}

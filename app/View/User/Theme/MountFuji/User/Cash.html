@@ -1,0 +1,79 @@
+#{include file="../Common/Header.html"}
+<div class="mf-page-shell mf-page-shell-cash">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+
+        <section class="mf-panel">
+            <ul class="layui-tab-title">
+                <li class="layui-this"><a href="/user/cash/index"><i class="fa-duotone fa-regular fa-hand-holding-dollar"></i> 硬币兑现</a></li>
+                <li><a href="/user/cash/record"><i class="fa-duotone fa-regular fa-timeline-arrow"></i> 兑现记录 <span class="layui-badge">#{$processing}</span></a></li>
+            </ul>
+
+            <blockquote class="elem-quote mf-cash-note">
+                <div class="mf-cash-note-item is-balance">
+                    <span class="mf-cash-note-label">
+                        <i class="fa-duotone fa-regular fa-coins"></i>
+                        当前拥有
+                    </span>
+                    <strong class="mf-cash-note-value">#{$user.coin} 硬币</strong>
+                </div>
+
+                <div class="mf-cash-note-item">
+                    <span class="mf-cash-note-label">
+                        <i class="fa-duotone fa-regular fa-badge-dollar"></i>
+                        最低兑现金额
+                    </span>
+                    <strong class="mf-cash-note-value">#{$config.cash_min} 元</strong>
+                </div>
+                <div class="mf-cash-note-item">
+                    <span class="mf-cash-note-label">
+                        <i class="fa-duotone fa-regular fa-receipt"></i>
+                        手动提现费用
+                    </span>
+                    <strong class="mf-cash-note-value">#{$config.cash_cost} 元</strong>
+                </div>
+            </blockquote>
+
+            <form class="layui-form">
+                <div class="form-block">
+                    <div>
+                        <div class="form-header">兑现硬币</div>
+                        <div class="mf-recharge-amount-row">
+                            <label class="mf-recharge-amount-field">
+                                <span class="mf-recharge-currency">￥</span>
+                                <input type="text"
+                                       name="amount"
+                                       required
+                                       lay-verify="required"
+                                       value="#{$config.cash_min}"
+                                       inputmode="decimal"
+                                       autocomplete="off"
+                                       placeholder="输入兑现金额"
+                                       class="layui-input mf-recharge-amount-input">
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mf-recharge-pay-section">
+                        <div class="mf-recharge-section-label">
+                            <i class="fa-duotone fa-regular fa-credit-card"></i>
+                            <span>兑现方式</span>
+                        </div>
+                        <div class="form-body pay-list mf-recharge-pay-list">
+                            #{if $config.cash_type_alipay == 1}<a class="button-click cash-wallet-btn btn-pay" data-id="0"><img src="/assets/user/images/cash/alipay.png" class="pay-icon"> 支付宝</a>#{/if}
+                            #{if $config.cash_type_wechat == 1}<a class="button-click cash-wallet-btn btn-pay" data-id="1"><img src="/assets/user/images/cash/wechat.png" class="pay-icon"> 微信</a>#{/if}
+                            #{if $config.cash_type_usdt == 1}<a class="button-click cash-wallet-btn btn-pay" data-id="3"><img src="/assets/user/images/cash/usdt.png" class="pay-icon"> USDT(TRC20)</a>#{/if}
+                            #{if $config.cash_type_balance == 1}<a class="button-click cash-wallet-btn btn-pay checked" data-id="2"><img src="/assets/static/images/wallet.png" class="pay-icon"> 钱包余额</a>#{/if}
+                        </div>
+                    </div>
+                    <div class="mf-recharge-submit mf-primary-action-bar">
+                        <button type="button" class="layui-btn layui-btn-pink payButton mf-primary-action-button">
+                            <i class="fa-duotone fa-regular fa-paper-plane-top"></i> 立即兑现
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+#{ready("/assets/user/controller/user/cash.js")}
+#{include file="../Common/Footer.html"}

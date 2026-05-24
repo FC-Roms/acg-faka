@@ -1,0 +1,122 @@
+#{include file="../Common/Header.html"}
+<div class="mf-page-shell mf-page-shell-recharge" data-mf-balance="#{$user.balance}">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+        <section class="mf-panel mf-recharge-core">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-circle-dollar"></i> 充值中心</span>
+            </div>
+
+            <div class="mf-recharge-core-grid">
+                <section class="mf-recharge-block mf-recharge-summary-block"
+                         data-mf-progress-current="#{$user.recharge}"
+                         data-mf-progress-target="#{if $groupNext}#{$groupNext.recharge}#{else}#{$user.recharge}#{/if}">
+                    <div class="mf-recharge-summary-grid">
+                        <article class="mf-recharge-summary-item">
+                            <span>钱包余额</span>
+                            <strong>￥#{$user.balance}</strong>
+                        </article>
+                        <article class="mf-recharge-summary-item">
+                            <span>累计元气</span>
+                            <strong>#{$user.recharge}</strong>
+                        </article>
+                        <article class="mf-recharge-summary-item">
+                            <span>当前等级</span>
+                            <strong>#{$user.group.name}</strong>
+                        </article>
+                        <article class="mf-recharge-summary-item">
+                            <span>#{if $groupNext}下一等级#{else}当前状态#{/if}</span>
+                            <strong>#{if $groupNext}#{$groupNext.name}#{else}已满级#{/if}</strong>
+                        </article>
+                    </div>
+
+                    <div class="mf-recharge-summary-progress">
+                        <div class="mf-recharge-progress-track">
+                            <span data-mf-progress-bar></span>
+                        </div>
+                        <p>
+                            #{if $groupNext}
+                                距离 #{$groupNext.name} 还差 ￥#{$groupNext.recharge-$user.recharge}
+                            #{else}
+                                已达到当前最高等级
+                            #{/if}
+                        </p>
+                    </div>
+                </section>
+
+                <form class="layui-form mf-recharge-block mf-recharge-action-block">
+                    <div class="mf-recharge-block-head mf-recharge-action-head">
+                        <div>
+                            <strong>充值金额</strong>
+                        </div>
+                    </div>
+
+                    <div class="mf-recharge-amount-row">
+                        <label class="mf-recharge-amount-field">
+                            <span class="mf-recharge-currency">￥</span>
+                            <input type="text"
+                                   name="amount"
+                                   data-mf-recharge-input
+                                   required
+                                   lay-verify="required"
+                                   value="#{if $config.recharge_min == 0}10#{else}#{$config.recharge_min}#{/if}"
+                                   inputmode="decimal"
+                                   autocomplete="off"
+                                   placeholder="输入充值金额"
+                                   class="layui-input mf-recharge-amount-input">
+                        </label>
+                    </div>
+
+                    <div class="mf-recharge-pay-section">
+                        <div class="mf-recharge-section-label">
+                            <i class="fa-duotone fa-regular fa-credit-card"></i>
+                            <span>支付方式</span>
+                        </div>
+                        <div class="form-body pay-list mf-recharge-pay-list"></div>
+                    </div>
+
+                    <div class="mf-recharge-submit">
+                        <button type="button" class="layui-btn layui-btn-pink payButton">
+                            <i class="fa-duotone fa-regular fa-bolt"></i> 立即充值
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section class="mf-panel mf-recharge-level-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-crown"></i> 会员等级</span>
+            </div>
+            <div class="mf-recharge-level-list">
+                #{foreach $groups as $g}
+                    <article class="mf-recharge-level-item #{if $g.name == $user.group.name}is-current#{/if} #{if $groupNext && $g.name == $groupNext.name}is-next#{/if}">
+                        <div class="mf-recharge-level-left">
+                            <img src="#{$g.icon}" alt="#{$g.name}">
+                            <div>
+                                <strong>#{$g.name}</strong>
+                                <span>
+                                    #{if $g.name == $user.group.name}
+                                        当前等级
+                                    #{elseif $groupNext && $g.name == $groupNext.name}
+                                        下一目标
+                                    #{elseif $user.recharge >= $g.recharge}
+                                        已解锁
+                                    #{else}
+                                        未达成
+                                    #{/if}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mf-recharge-level-right">
+                            <span>所需元气</span>
+                            <strong>#{$g.recharge}</strong>
+                        </div>
+                    </article>
+                #{/foreach}
+            </div>
+        </section>
+    </main>
+</div>
+#{ready("/assets/user/controller/user/recharge.js")}
+#{include file="../Common/Footer.html"}

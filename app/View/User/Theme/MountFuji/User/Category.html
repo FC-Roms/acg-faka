@@ -1,0 +1,19 @@
+#{include file="../Common/Header.html"}
+<div class="mf-page-shell mf-page-shell-goods-admin" data-mf-controller="/assets/user/controller/business/category.js" data-mf-table="#category-table">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+        <section class="mf-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-layer-group"></i> 分类列表</span>
+                <button type="button" class="layui-btn  button-add">
+                    <i class="fa-duotone fa-regular fa-circle-plus"></i> 新建分类
+                </button>
+            </div>
+            <div class="mf-table-wrap">
+                <table id="category-table"></table>
+            </div>
+        </section>
+    </main>
+</div>
+#{ready("/assets/user/controller/business/category.js")}
+#{include file="../Common/Footer.html"}

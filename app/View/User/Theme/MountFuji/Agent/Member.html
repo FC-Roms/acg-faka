@@ -1,0 +1,16 @@
+#{include file="../Common/Header.html"}
+<div class="mf-page-shell" data-mf-controller="/assets/user/controller/user/child.js" data-mf-table="#member-table">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+        <section class="mf-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-users-viewfinder"></i> 我的下级</span>
+            </div>
+            <div class="mf-table-wrap">
+                <table id="member-table"></table>
+            </div>
+        </section>
+    </main>
+</div>
+#{ready("/assets/user/controller/user/child.js")}
+#{include file="../Common/Footer.html"}

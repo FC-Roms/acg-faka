@@ -1,0 +1,16 @@
+#{include file="../Common/Header.html"}
+<div class="mf-page-shell" data-mf-controller="/assets/user/controller/user/bill.js" data-mf-table="#bill-table">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+        <section class="mf-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-scroll"></i> 账单明细</span>
+            </div>
+            <div class="mf-table-wrap">
+                <table id="bill-table"></table>
+            </div>
+        </section>
+    </main>
+</div>
+#{ready("/assets/user/controller/user/bill.js")}
+#{include file="../Common/Footer.html"}

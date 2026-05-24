@@ -1,0 +1,22 @@
+#{include file="../Common/Header.html"}
+<div class="mf-page-shell" data-mf-controller="/assets/user/controller/user/cash.record.js" data-mf-table="#cash-table">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+        <section class="mf-page-hero">
+            <p class="mf-page-eyebrow">Cash Record</p>
+            <h1 class="mf-page-title">兑现记录</h1>
+            <p class="mf-page-description">查看所有提现吗申请、处理进度与到账状态。</p>
+        </section>
+        <section class="mf-panel">
+            <ul class="layui-tab-title">
+                <li><a href="/user/cash/index"><i class="fa-duotone fa-regular fa-hand-holding-dollar"></i> 硬币兑现</a></li>
+                <li class="layui-this"><a href="/user/cash/record"><i class="fa-duotone fa-regular fa-timeline-arrow"></i> 兑现记录</a></li>
+            </ul>
+            <div class="mf-table-wrap">
+                <table id="cash-table"></table>
+            </div>
+        </section>
+    </main>
+</div>
+#{ready("/assets/user/controller/user/cash.record.js")}
+#{include file="../Common/Footer.html"}
