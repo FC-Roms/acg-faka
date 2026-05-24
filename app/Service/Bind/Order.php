@@ -21,6 +21,7 @@ use App\Model\UserCommodity;
 use App\Model\UserGroup;
 use App\Service\Email;
 use App\Service\Shared;
+use App\Support\CouponOpenApi;
 use App\Util\Client;
 use App\Util\Date;
 use App\Util\Ini;
@@ -330,6 +331,8 @@ class Order implements \App\Service\Order
      */
     private function validateCouponUserLimit(Coupon $coupon, Commodity $commodity, ?User $user): void
     {
+        CouponOpenApi::validateExclusiveCoupon($coupon, $user);
+
         $userLimit = (int)($coupon->user_limit ?? 0);
         if ($userLimit === 0) {
             return;

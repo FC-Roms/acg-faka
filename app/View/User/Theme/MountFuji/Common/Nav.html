@@ -133,21 +133,35 @@
                 </ul>
             </div>
 
-            #{if is_dir(BASE_PATH . '/app/Plugin/InviteReward') and (int)(\App\Util\Plugin::getConfig('InviteReward')['STATUS'] ?? 0) == 1 and !\Kernel\Plugin\Hook::inst()->exist('InviteReward', \App\Consts\Hook::USER_VIEW_MENU, '\App\Plugin\InviteReward\Hook\Main', 'UserMenu')}
             <div class="mf-nav-group">
                 <div class="mf-nav-group-label">邀请</div>
                 <ul class="mf-side-nav">
                     <li class="mf-nav-item #{if $title=='邀请奖励'}is-active#{/if}">
+                        #{if is_dir(BASE_PATH . '/app/Plugin/InviteReward') and (int)(\App\Util\Plugin::getConfig('InviteReward')['STATUS'] ?? 0) == 1 and !\Kernel\Plugin\Hook::inst()->exist('InviteReward', \App\Consts\Hook::USER_VIEW_MENU, '\App\Plugin\InviteReward\Hook\Main', 'UserMenu')}
                         <a href="/plugin/InviteReward/index/index">
                             <i class="fa-duotone fa-regular fa-user-plus"></i>
                             <span class="mf-nav-copy">
                                 <strong>邀请奖励</strong>
                             </span>
                         </a>
+                        #{/if}
                     </li>
                 </ul>
             </div>
-            #{/if}
+
+            <div class="mf-nav-group">
+                <div class="mf-nav-group-label">优惠券</div>
+                <ul class="mf-side-nav">
+                    <li class="mf-nav-item #{if $title=='我的优惠券'}is-active#{/if}">
+                        <a href="/user/couponWallet/index">
+                            <i class="fa-duotone fa-regular fa-ticket-perforated"></i>
+                            <span class="mf-nav-copy">
+                                <strong>我的优惠券</strong>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
 
             <!--start::HOOK-->
             #{hook(\App\Consts\Hook::USER_VIEW_MENU)}

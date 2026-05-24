@@ -36,13 +36,16 @@ try {
     // 兼容部分服务器只转发到 index.php、未附带 s 参数的开放接口请求。
     if (!isset($_GET['s'])) {
         $requestPath = (string)parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-        if ($requestPath === '/opencard' || str_starts_with($requestPath, '/opencard/')) {
+        if ($requestPath === '/opencard' || str_starts_with($requestPath, '/opencard/')
+            || $requestPath === '/api' || str_starts_with($requestPath, '/api/')
+            || $requestPath === '/coupon' || str_starts_with($requestPath, '/coupon/')) {
             $_GET['s'] = $requestPath;
         }
     }
 
     preg_match('/\/item\/(\d+)/', $_GET['s'] ?? "/", $_item);
     preg_match('/\/cat\/(\d+|recommend)/', $_GET['s'] ?? "/", $_cat);
+    preg_match('/^\/coupon\/([A-Za-z0-9_-]+)$/', $_GET['s'] ?? "/", $_coupon);
 
     if (isset($_item[1]) && is_numeric($_item[1])) {
         $_GET['s'] = "/user/index/item";
@@ -52,6 +55,11 @@ try {
     if (isset($_cat[1]) && (is_numeric($_cat[1]) || $_cat[1] == "recommend")) {
         $_GET['s'] = "/user/index/index";
         $_GET['cid'] = $_cat[1];
+    }
+
+    if (isset($_coupon[1])) {
+        $_GET['s'] = "/coupon/index";
+        $_GET['code'] = $_coupon[1];
     }
 
     //waf install -> 2025-07-26
@@ -164,7 +172,8 @@ try {
     }
 } catch (Throwable $e) {
     $errorRoute = $_GET['s'] ?? (string)parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-    if (str_starts_with('/' . trim((string)$errorRoute, '/'), '/opencard/')) {
+    if (str_starts_with('/' . trim((string)$errorRoute, '/'), '/opencard/')
+        || str_starts_with('/' . trim((string)$errorRoute, '/'), '/api/')) {
         header('content-type:application/json;charset=utf-8');
         exit(json_encode([
             "code" => 0,

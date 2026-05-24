@@ -1,0 +1,24 @@
+#{include file="../Common/Header.html"}
+<div class="mf-page-shell mf-page-shell-record" data-mf-controller="/assets/user/controller/user/coupon.wallet.js">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+        <section class="mf-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-ticket-perforated"></i> 我的优惠券</span>
+            </div>
+            <div class="mf-table-wrap">
+                <table id="coupon-wallet-table"></table>
+            </div>
+        </section>
+        <section class="mf-panel" style="margin-top:16px;">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-clock-rotate-left"></i> 优惠券使用记录</span>
+            </div>
+            <div class="mf-table-wrap">
+                <table id="coupon-record-table"></table>
+            </div>
+        </section>
+    </main>
+</div>
+#{ready("/assets/user/controller/user/coupon.wallet.js")}
+#{include file="../Common/Footer.html"}

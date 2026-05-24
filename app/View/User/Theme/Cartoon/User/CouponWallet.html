@@ -1,0 +1,22 @@
+#{include file="../Common/Header.html"}
+<div class="layui-container fly-marginTop fly-user-main">
+    #{include file="../Common/Nav.html"}
+    <div class="fly-panel fly-panel-user" pad20>
+        <div class="layui-tab layui-tab-brief" lay-filter="user">
+            <div class="content-header">
+                <i class="layui-icon">&#xe638;</i> 我的优惠券
+            </div>
+            <div class="content-body">
+                <table id="coupon-wallet-table"></table>
+            </div>
+            <div class="content-header" style="margin-top:18px;">
+                <i class="layui-icon">&#xe60e;</i> 优惠券使用记录
+            </div>
+            <div class="content-body">
+                <table id="coupon-record-table"></table>
+            </div>
+        </div>
+    </div>
+</div>
+#{ready("/assets/user/controller/user/coupon.wallet.js")}
+#{include file="../Common/Footer.html"}
