@@ -11,3 +11,10 @@ private/
 # 仓库外备份目录误放入项目时也不提交
 *-private-backup/
 本地私密内容*
+
+# 线上运行数据、上传内容和日志
+runtime/
+assets/cache/
+kernel/Install/Lock
+app/Plugin/*/runtime.log
+.user.ini
