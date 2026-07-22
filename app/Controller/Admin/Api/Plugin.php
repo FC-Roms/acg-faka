@@ -104,7 +104,7 @@ class Plugin extends Manage
         }
         $config = $plugin[\App\Consts\Plugin::PLUGIN_CONFIG];
 
-        if (isset($map['STATUS'])) {
+        if (isset($map['STATUS']) && count($map) === 1) {
             if ((int)$map['STATUS'] == 1) {
                 _plugin_start($id);
                 $this->syncPluginStatus($id, $config, 1);

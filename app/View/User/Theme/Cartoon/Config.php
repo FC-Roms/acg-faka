@@ -39,6 +39,8 @@ interface Config
      * 模板文件重定向，不需要修改的直接删除
      */
     const THEME = [
+        "INVITE_REWARD" => "User/InviteReward.html",
+        "COUPON_WALLET" => "User/CouponWallet.html",
         "INDEX" => "Index/Index.html", //卡网首页
         "CLOSED" => "Index/Closed.html", //维护页面
         "QUERY" => "Index/Query.html", //订单查询

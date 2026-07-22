@@ -33,14 +33,55 @@ session_name("ACG-SHOP");
 //session_start();
 //session_write_close();
 try {
+    $normalizeRoutePath = static function (string $route): string {
+        $route = trim($route);
+        if ($route === '') {
+            return '/';
+        }
+
+        // 部分服务器会把站内路径写成 //user/xxx，先收敛成普通站内路径，避免 parse_url 把 user 当成 host 丢掉。
+        if (str_starts_with($route, '//')) {
+            $route = '/' . ltrim($route, '/');
+        }
+
+        $path = parse_url($route, PHP_URL_PATH);
+        if (!is_string($path) || $path === '') {
+            $path = $route;
+            $queryPos = strpos($path, '?');
+            if ($queryPos !== false) {
+                $path = substr($path, 0, $queryPos);
+            }
+        }
+
+        if (str_starts_with($path, '/index.php/')) {
+            $path = substr($path, strlen('/index.php'));
+        }
+
+        return '/' . trim($path, '/');
+    };
+
     // 兼容部分服务器只转发到 index.php、未附带 s 参数的开放接口请求。
     if (!isset($_GET['s'])) {
-        $requestPath = (string)parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-        if ($requestPath === '/opencard' || str_starts_with($requestPath, '/opencard/')
-            || $requestPath === '/api' || str_starts_with($requestPath, '/api/')
-            || $requestPath === '/coupon' || str_starts_with($requestPath, '/coupon/')) {
-            $_GET['s'] = $requestPath;
+        $routeCandidates = [
+            (string)($_SERVER['PATH_INFO'] ?? ''),
+            (string)($_SERVER['REDIRECT_URL'] ?? ''),
+            (string)($_SERVER['ORIG_PATH_INFO'] ?? ''),
+            (string)($_SERVER['REQUEST_URI'] ?? '/')
+        ];
+
+        foreach ($routeCandidates as $routeCandidate) {
+            $routeCandidate = $normalizeRoutePath($routeCandidate);
+
+            $routeRoot = strtolower(strtok(trim($routeCandidate, '/'), '/') ?: '');
+            if (in_array($routeRoot, ['user', 'admin', 'api', 'opencard', 'plugin', 'coupon', 'item', 'cat'], true)) {
+                $_GET['s'] = $routeCandidate;
+                break;
+            }
         }
+    }
+
+    if (isset($_GET['s'])) {
+        $_GET['s'] = $normalizeRoutePath((string)$_GET['s']);
     }
 
     preg_match('/\/item\/(\d+)/', $_GET['s'] ?? "/", $_item);
@@ -62,8 +103,41 @@ try {
         $_GET['code'] = $_coupon[1];
     }
 
+    if (isset($_GET['s'])) {
+        $routeCandidate = '/' . trim((string)$_GET['s'], '/');
+        $routeKey = strtolower($routeCandidate);
+        $couponWalletRoute = '/user/couponwallet';
+        $couponWalletApiRoute = '/user/api/couponwallet';
+        $inviteRewardRoute = '/user/invitereward';
+        if ($routeKey === $couponWalletRoute || str_starts_with($routeKey, $couponWalletRoute . '/')) {
+            $_GET['s'] = '/user/couponWallet' . substr($routeCandidate, strlen($couponWalletRoute));
+        } elseif ($routeKey === $couponWalletApiRoute || str_starts_with($routeKey, $couponWalletApiRoute . '/')) {
+            $_GET['s'] = '/user/api/couponWallet' . substr($routeCandidate, strlen($couponWalletApiRoute));
+        } elseif ($routeKey === $inviteRewardRoute || str_starts_with($routeKey, $inviteRewardRoute . '/')) {
+            $_GET['s'] = '/user/inviteReward' . substr($routeCandidate, strlen($inviteRewardRoute));
+        }
+    }
+
     //waf install -> 2025-07-26
     $routePath = $_GET['s'] = $_GET['s'] ?? "/user/index/index";
+    if ($routePath === "/user/index/index") {
+        $fallbackCandidates = [
+            (string)($_SERVER['PATH_INFO'] ?? ''),
+            (string)($_SERVER['REDIRECT_URL'] ?? ''),
+            (string)($_SERVER['ORIG_PATH_INFO'] ?? ''),
+            (string)($_SERVER['REQUEST_URI'] ?? '')
+        ];
+        foreach ($fallbackCandidates as $fallbackPath) {
+            $fallbackPath = $normalizeRoutePath($fallbackPath);
+            if (str_starts_with($fallbackPath, '/user/')
+                || str_starts_with($fallbackPath, '/admin/')
+                || str_starts_with($fallbackPath, '/api/')
+                || str_starts_with($fallbackPath, '/plugin/')) {
+                $routePath = $_GET['s'] = $fallbackPath;
+                break;
+            }
+        }
+    }
     Context::set(\Kernel\Context\Interface\Request::class, new Request());
     if (trim($routePath, "/") == 'admin') {
         header('location:' . "/admin/authentication/login");

@@ -20,7 +20,7 @@ return [
     'inviter_coin_enabled' => '0',
     'inviter_coin_amount' => '0',
 
-    'invitee_reward_trigger' => 'register',
+    'invitee_reward_trigger' => 'email_bound',
     'invitee_coupon_enabled' => '1',
     'invitee_coupon_prefix' => 'NEW',
     'invitee_coupon_owner' => '0',

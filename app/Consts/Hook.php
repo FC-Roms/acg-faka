@@ -86,6 +86,9 @@ interface Hook
     //登录账户之后，HOOK时传参：$user 注册成功后的用户对象
     const USER_API_AUTH_LOGIN_AFTER = 0x22;
 
+    //用户绑定邮箱成功之后，HOOK时传参：$user 绑定成功后的用户对象
+    const USER_API_SECURITY_EMAIL_BIND_AFTER = 0x23;
+
 
     //核心初始化完成
     const KERNEL_INIT = 0x30;

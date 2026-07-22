@@ -17,6 +17,9 @@ class InviteService
 {
     public const PLUGIN = 'InviteReward';
     public const COOKIE = 'invite_reward_code';
+    public const TRIGGER_REGISTER = 'register';
+    public const TRIGGER_EMAIL_BOUND = 'email_bound';
+    public const TRIGGER_FIRST_PAID_ORDER = 'first_paid_order';
 
     public function isEnabled(): bool
     {
@@ -97,6 +100,12 @@ class InviteService
         return true;
     }
 
+    public function clearInviteCookie(): void
+    {
+        unset($_COOKIE[self::COOKIE]);
+        setcookie(self::COOKIE, '', time() - 3600, '/');
+    }
+
     public function bindInvitee(User $user): void
     {
         if (!$this->isEnabled() || !SchemaService::ready()) {
@@ -131,9 +140,25 @@ class InviteService
         $relation->update_time = Date::current();
         $relation->save();
 
-        $reward = new RewardService();
-        $reward->grantConfiguredRewards($relation, (int)$relation->invitee_user_id, 'invitee', 'register');
-        $reward->grantConfiguredRewards($relation, (int)$relation->inviter_user_id, 'inviter', 'register');
+        $this->grantRelationRewards($relation, self::TRIGGER_REGISTER);
+
+        if ($this->hasBoundEmail($user)) {
+            $this->grantRelationRewards($relation, self::TRIGGER_EMAIL_BOUND);
+        }
+    }
+
+    public function handleEmailBound(User $user): void
+    {
+        if (!$this->isEnabled() || !SchemaService::ready() || !$this->hasBoundEmail($user)) {
+            return;
+        }
+
+        $relation = InviteRelation::query()->where('invitee_user_id', $user->id)->first();
+        if (!$relation instanceof InviteRelation || (int)$relation->status !== 1) {
+            return;
+        }
+
+        $this->grantRelationRewards($relation, self::TRIGGER_EMAIL_BOUND);
     }
 
     public function handleFirstPaidOrder(Order $order): void
@@ -170,9 +195,7 @@ class InviteService
         }
 
         $triggerId = (string)$order->id;
-        $reward = new RewardService();
-        $reward->grantConfiguredRewards($relation, (int)$relation->invitee_user_id, 'invitee', 'first_paid_order', $triggerId);
-        $reward->grantConfiguredRewards($relation, (int)$relation->inviter_user_id, 'inviter', 'first_paid_order', $triggerId);
+        $this->grantRelationRewards($relation, self::TRIGGER_FIRST_PAID_ORDER, $triggerId);
     }
 
     public function userSummary(int $userId): array
@@ -291,6 +314,18 @@ class InviteService
         return strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $code) ?: '');
     }
 
+    private function hasBoundEmail(User $user): bool
+    {
+        return trim((string)($user->email ?? '')) !== '';
+    }
+
+    private function grantRelationRewards(InviteRelation $relation, string $triggerType, string $triggerId = ''): void
+    {
+        $reward = new RewardService();
+        $reward->grantConfiguredRewards($relation, (int)$relation->invitee_user_id, 'invitee', $triggerType, $triggerId);
+        $reward->grantConfiguredRewards($relation, (int)$relation->inviter_user_id, 'inviter', $triggerType, $triggerId);
+    }
+
     private function deviceId(): string
     {
         return sha1((string)($_SERVER['HTTP_USER_AGENT'] ?? ''));
@@ -380,6 +415,7 @@ class InviteService
     {
         return match ($type) {
             'register' => '注册后',
+            'email_bound' => '注册并绑定邮箱后',
             'first_paid_order' => '首单支付后',
             default => $type
         };

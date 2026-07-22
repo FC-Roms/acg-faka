@@ -42,6 +42,7 @@ abstract class User extends \App\Controller\Base\User
             $data['title'] = $title;
             $data['app']['version'] = \config("app")['version'];
             $cfg = Config::list();
+            $data['showInviteRewardMenu'] = $this->showInviteRewardMenu();
 
             foreach ($cfg as $k => $v) {
                 $data["config"][$k] = $v;
@@ -73,6 +74,7 @@ abstract class User extends \App\Controller\Base\User
             $data['favicon'] = "/favicon.ico";
 
             $cfg = Config::list();
+            $data['showInviteRewardMenu'] = $this->showInviteRewardMenu();
 
             foreach ($cfg as $k => $v) {
                 $data["config"][$k] = $v;
@@ -157,5 +159,18 @@ abstract class User extends \App\Controller\Base\User
         return "";
     }
 
+    private function showInviteRewardMenu(): bool
+    {
+        if (!is_dir(BASE_PATH . '/app/Plugin/InviteReward')) {
+            return false;
+        }
+
+        $config = \App\Util\Plugin::getConfig('InviteReward');
+        if ((int)($config['STATUS'] ?? 0) !== 1) {
+            return false;
+        }
+
+        return true;
+    }
 
 }

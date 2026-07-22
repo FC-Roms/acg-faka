@@ -10,6 +10,6 @@ class Coupon
     public function index(): void
     {
         $code = trim((string)($_GET['code'] ?? ''));
-        Client::redirect('/user/couponWallet/index?code=' . rawurlencode($code), '正在进入优惠券页面', 0);
+        Client::redirect('/user/couponwallet/index?code=' . rawurlencode($code), '正在进入优惠券页面', 0);
     }
 }

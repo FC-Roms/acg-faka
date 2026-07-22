@@ -25,7 +25,7 @@
         layer.msg("券码已复制");
     };
 
-    const couponTable = new Table("/user/api/couponWallet/data", "#coupon-wallet-table");
+    const couponTable = new Table("/user/api/couponwallet/data", "#coupon-wallet-table");
     couponTable.setColumns([
         {field: "code", title: "券码"},
         {field: "source_label", title: "来源"},
@@ -56,7 +56,7 @@
     ]);
     couponTable.render();
 
-    const recordTable = new Table("/user/api/couponWallet/records", "#coupon-record-table");
+    const recordTable = new Table("/user/api/couponwallet/records", "#coupon-record-table");
     recordTable.setColumns([
         {field: "trade_no", title: "订单号"},
         {field: "coupon_code", title: "券码"},

@@ -29,6 +29,7 @@ return [
         'dict' => [
             ['id' => 'none', 'name' => '不发放'],
             ['id' => 'register', 'name' => '新人注册后'],
+            ['id' => 'email_bound', 'name' => '新人注册并绑定邮箱后'],
             ['id' => 'first_paid_order', 'name' => '新人首单支付后']
         ],
         'default' => 'first_paid_order'
@@ -124,9 +125,10 @@ return [
         'dict' => [
             ['id' => 'none', 'name' => '不发放'],
             ['id' => 'register', 'name' => '注册后'],
+            ['id' => 'email_bound', 'name' => '注册并绑定邮箱后'],
             ['id' => 'first_paid_order', 'name' => '首单支付后']
         ],
-        'default' => 'register'
+        'default' => 'email_bound'
     ],
     [
         'title' => '新人优惠券',

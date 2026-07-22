@@ -1,0 +1,173 @@
+#{include file="../Common/Header.html"}
+<div class="mf-page-shell mf-page-shell-record">
+    #{include file="../Common/Nav.html"}
+    <main class="mf-main">
+        <section class="mf-panel">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-user-plus"></i> 邀请奖励</span>
+            </div>
+            <div class="mf-toolbar" style="align-items:stretch;gap:10px;">
+                <input id="invite-url" class="layui-input" readonly value="#{$invite_url}">
+                <button class="layui-btn" type="button" onclick="copyInviteUrl()">
+                    <i class="fa-duotone fa-regular fa-copy"></i> 复制链接
+                </button>
+            </div>
+            <div class="mf-table-wrap" style="padding-top:10px;">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        <td style="width:160px;">邀请码</td>
+                        <td>#{$invite_code}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="mf-panel" style="margin-top:16px;">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-chart-simple"></i> 邀请概览</span>
+            </div>
+            <div class="mf-table-wrap">
+                <table class="layui-table">
+                    <tbody>
+                    <tr>
+                        <td>累计邀请</td>
+                        <td>#{$summary.invite_count}</td>
+                        <td>有效邀请</td>
+                        <td>#{$summary.valid_count}</td>
+                        <td>已首单</td>
+                        <td>#{$summary.paid_count}</td>
+                    </tr>
+                    <tr>
+                        <td>奖励成功</td>
+                        <td>#{$summary.reward_success_count}</td>
+                        <td>奖励失败</td>
+                        <td>#{$summary.reward_failed_count}</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="mf-panel" style="margin-top:16px;">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-gift"></i> 奖励规则</span>
+            </div>
+            <div class="mf-table-wrap">
+                <table class="layui-table">
+                    <thead>
+                    <tr>
+                        <th>对象</th>
+                        <th>类型</th>
+                        <th>内容</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    #{foreach $reward_config as $item}
+                    <tr>
+                        <td>#{$item.role}</td>
+                        <td>#{$item.type}</td>
+                        <td>#{$item.content}</td>
+                    </tr>
+                    #{/foreach}
+                    #{if count($reward_config) == 0}
+                    <tr><td colspan="3" style="text-align:center;color:#999;">暂无启用的奖励规则</td></tr>
+                    #{/if}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="mf-panel" style="margin-top:16px;">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-users"></i> 邀请记录</span>
+            </div>
+            <div class="mf-table-wrap">
+                <table class="layui-table">
+                    <thead>
+                    <tr>
+                        <th>用户ID</th>
+                        <th>用户名</th>
+                        <th>状态</th>
+                        <th>首单</th>
+                        <th>首单时间</th>
+                        <th>注册时间</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    #{foreach $relations as $item}
+                    <tr>
+                        <td>#{$item.invitee_user_id}</td>
+                        <td>#{$item.invitee_username}</td>
+                        <td>#{$item.status_text}</td>
+                        <td>#{$item.first_paid_text}</td>
+                        <td>#{$item.first_paid_time}</td>
+                        <td>#{$item.create_time}</td>
+                    </tr>
+                    #{/foreach}
+                    #{if count($relations) == 0}
+                    <tr><td colspan="6" style="text-align:center;color:#999;">暂无邀请记录</td></tr>
+                    #{/if}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="mf-panel" style="margin-top:16px;">
+            <div class="mf-panel-heading">
+                <span><i class="fa-duotone fa-regular fa-clock-rotate-left"></i> 奖励记录</span>
+            </div>
+            <div class="mf-table-wrap">
+                <table class="layui-table">
+                    <thead>
+                    <tr>
+                        <th>角色</th>
+                        <th>触发</th>
+                        <th>类型</th>
+                        <th>奖励</th>
+                        <th>状态</th>
+                        <th>发放时间</th>
+                        <th>备注</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    #{foreach $rewards as $item}
+                    <tr>
+                        <td>#{$item.role_text}</td>
+                        <td>#{$item.trigger_text}</td>
+                        <td>#{$item.reward_type_text}</td>
+                        <td>#{$item.reward_value}</td>
+                        <td>#{$item.status_text}</td>
+                        <td>#{$item.grant_time}</td>
+                        <td>#{$item.remark}</td>
+                    </tr>
+                    #{/foreach}
+                    #{if count($rewards) == 0}
+                    <tr><td colspan="7" style="text-align:center;color:#999;">暂无奖励记录</td></tr>
+                    #{/if}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    function copyInviteUrl() {
+        var input = document.getElementById('invite-url');
+        input.select();
+        input.setSelectionRange(0, input.value.length);
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(input.value);
+        } else {
+            document.execCommand('copy');
+        }
+        if (window.layer) {
+            layer.msg('邀请链接已复制');
+        }
+    }
+</script>
+#{include file="../Common/Footer.html"}

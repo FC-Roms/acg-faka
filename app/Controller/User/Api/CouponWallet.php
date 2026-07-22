@@ -24,6 +24,8 @@ class CouponWallet extends User
         $email = CouponOpenApi::normalizeEmail($user->email ?? '');
         if ($email !== '') {
             CouponOpenApi::ensureRecordTable();
+            $this->restoreQqExclusiveRecords($email);
+
             $records = Manager::table(CouponOpenApi::TABLE)
                 ->where('target_email', $email)
                 ->orderByDesc('id')
@@ -69,6 +71,46 @@ class CouponWallet extends User
         });
 
         return $this->json(data: $this->paginate($rows));
+    }
+
+    private function restoreQqExclusiveRecords(string $email): void
+    {
+        if (!preg_match('/^([1-9]\d{4,11})@qq\.com$/i', $email, $matches)) {
+            return;
+        }
+
+        $qq = $matches[1];
+        if (Manager::table(CouponOpenApi::TABLE)->where('qq', $qq)->exists()) {
+            return;
+        }
+
+        $couponIds = Manager::table(CouponOpenApi::TABLE)->pluck('coupon_id')->toArray();
+        $query = Coupon::query()
+            ->where('owner', 0)
+            ->where('status', 0)
+            ->where(function ($builder) use ($qq) {
+                $builder->where('code', 'like', 'AI-' . $qq . '-%')
+                    ->orWhere('note', 'QQ exclusive ' . $qq);
+            });
+
+        if ($couponIds) {
+            $query->whereNotIn('id', $couponIds);
+        }
+
+        $now = \App\Util\Date::current();
+        foreach ($query->get() as $coupon) {
+            Manager::table(CouponOpenApi::TABLE)->insert([
+                'qq' => $qq,
+                'target_email' => $email,
+                'coupon_id' => $coupon->id,
+                'source' => 'qq_group_join',
+                'request_count' => 1,
+                'create_time' => $now,
+                'update_time' => $now,
+                'last_request_time' => $now
+            ]);
+            break;
+        }
     }
 
     public function records(): array

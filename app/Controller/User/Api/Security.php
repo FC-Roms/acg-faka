@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller\User\Api;
 
+use App\Consts\Hook;
 use App\Controller\Base\API\User;
 use App\Interceptor\UserSession;
 use App\Interceptor\Waf;
@@ -131,6 +132,7 @@ class Security extends User
         $user->save();
 
         $this->email->destroyCaptcha($user->email, Email::CAPTCHA_BIND_NEW);
+        hook(Hook::USER_API_SECURITY_EMAIL_BIND_AFTER, $user);
         return $this->json(200, "修改成功");
     }
 

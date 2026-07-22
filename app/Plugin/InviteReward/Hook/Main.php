@@ -54,13 +54,7 @@ class Main
     #[Hook(point: HookPoint::USER_VIEW_MENU)]
     public function UserMenu(): void
     {
-        if (!$this->isEnabled()) {
-            return;
-        }
-
-        $route = (string)Context::get(Base::ROUTE);
-        $active = str_starts_with($route, '/plugin/InviteReward') ? ' layui-this' : '';
-        echo '<li class="layui-nav-item' . $active . '"><a href="/plugin/InviteReward/index/index"><i class="layui-icon">&#xe612;</i>邀请奖励</a></li>';
+        // 用户中心主题已内置邀请奖励菜单，避免重复输出旧插件菜单。
     }
 
     #[Hook(point: HookPoint::ADMIN_VIEW_MENU)]
@@ -78,7 +72,18 @@ class Main
     #[Hook(point: HookPoint::USER_API_AUTH_REGISTER_AFTER)]
     public function AfterRegister(User $user): void
     {
-        (new InviteService())->bindInvitee($user);
+        $service = new InviteService();
+        try {
+            $service->bindInvitee($user);
+        } finally {
+            $service->clearInviteCookie();
+        }
+    }
+
+    #[Hook(point: HookPoint::USER_API_SECURITY_EMAIL_BIND_AFTER)]
+    public function AfterEmailBind(User $user): void
+    {
+        (new InviteService())->handleEmailBound($user);
     }
 
     #[Hook(point: HookPoint::USER_API_ORDER_PAY_AFTER)]
