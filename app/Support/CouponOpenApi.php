@@ -57,7 +57,7 @@ class CouponOpenApi
         }
 
         Manager::schema()->table('coupon', function (Blueprint $blueprint) {
-            $blueprint->tinyInteger('user_limit')->unsigned()->default(0)->comment('0=no limit, 1=new bound user, 2=one use per member')->after('sku');
+            $blueprint->tinyInteger('user_limit')->unsigned()->default(0)->comment('0=no limit, 1=new bound user, 2=one use per member, 3=verified QQ group member')->after('sku');
             $blueprint->index('user_limit');
         });
     }
@@ -132,7 +132,13 @@ class CouponOpenApi
         $source = mb_substr(trim((string)($payload['source'] ?? 'qq_group_join')), 0, 64);
         $raw = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
+        if (preg_match('/^[1-9]\d{4,11}$/', $groupId)) {
+            CouponGroup::ensureSchema();
+        }
+
         return Manager::connection()->transaction(function () use ($qq, $targetEmail, $now, $groupId, $nickname, $source, $raw) {
+            CouponGroup::syncMember($qq, $targetEmail, $groupId, $nickname, $source, $now);
+
             $record = Manager::table(self::TABLE)->where('qq', $qq)->lockForUpdate()->first();
             if ($record) {
                 Manager::table(self::TABLE)->where('id', $record->id)->update([

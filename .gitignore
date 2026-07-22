@@ -18,3 +18,7 @@ assets/cache/
 kernel/Install/Lock
 app/Plugin/*/runtime.log
 .user.ini
+
+# 忽略所有 Markdown 文档（保留 vendor 第三方依赖内的文档）
+*.md
+!vendor/**/*.md

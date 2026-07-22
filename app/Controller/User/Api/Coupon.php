@@ -13,6 +13,7 @@ use App\Interceptor\Business;
 use App\Interceptor\UserSession;
 use App\Interceptor\Waf;
 use App\Service\Query;
+use App\Support\CouponGroup;
 use App\Util\Date;
 use App\Util\Str;
 use Illuminate\Database\Capsule\Manager;
@@ -43,7 +44,7 @@ class Coupon extends User
 
         try {
             Manager::schema()->table("coupon", function (Blueprint $blueprint) {
-                $blueprint->tinyInteger("user_limit")->unsigned()->default(0)->comment("使用限制：0=不限，1=仅限绑定邮箱或手机号的新用户，2=登录会员每人限用一次")->after("sku");
+                $blueprint->tinyInteger("user_limit")->unsigned()->default(0)->comment("使用限制：0=不限，1=仅限绑定邮箱或手机号的新用户，2=登录会员每人限用一次，3=指定QQ群成员每人限用一次")->after("sku");
                 $blueprint->index("user_limit");
             });
         } catch (\Throwable $throwable) {
@@ -93,6 +94,7 @@ class Coupon extends User
         $life = (int)$_POST['life']; //可用次数
         $mode = (int)$_POST['mode']; //抵扣模式
         $userLimit = (int)($_POST['user_limit'] ?? 0); //使用人群限制
+        $groupIds = null;
         $categoryId = (int)$_POST['category_id']; //分类ID
 
         $raceGetMode = (int)$_POST['race_get_mode'];
@@ -113,7 +115,7 @@ class Coupon extends User
             throw new JSONException("ಠ_ಠ最少也要生成1张优惠券");
         }
 
-        if (!in_array($userLimit, [0, 1, 2], true)) {
+        if (!in_array($userLimit, [0, 1, 2, CouponGroup::USER_LIMIT], true)) {
             throw new JSONException("优惠券使用人群设置错误");
         }
         if ($userLimit !== 0) {
@@ -122,6 +124,16 @@ class Coupon extends User
         $hasUserLimitColumn = Manager::schema()->hasColumn("coupon", "user_limit");
         if ($userLimit !== 0 && !$hasUserLimitColumn) {
             throw new JSONException("请先执行优惠券新用户限制数据库补丁");
+        }
+        if ($userLimit === CouponGroup::USER_LIMIT) {
+            CouponGroup::ensureSchema();
+            $groupIds = CouponGroup::normalizeGroupIds((string)($_POST['group_ids'] ?? ''));
+            // 群券不消耗全局次数，life 仅保留为有效状态占位值。
+            $life = 1;
+        }
+        $hasGroupIdsColumn = Manager::schema()->hasColumn('coupon', 'group_ids');
+        if ($userLimit === CouponGroup::USER_LIMIT && !$hasGroupIdsColumn) {
+            throw new JSONException('请先执行群优惠券数据库增量脚本');
         }
 
 
@@ -155,6 +167,9 @@ class Coupon extends User
             $voucher->mode = $mode;
             if ($hasUserLimitColumn) {
                 $voucher->user_limit = $userLimit;
+            }
+            if ($hasGroupIdsColumn) {
+                $voucher->group_ids = $groupIds;
             }
             $voucher->sku = $sku;
             if ($race) {

@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $use_life
  * @property int $mode
  * @property int $user_limit
+ * @property string|null $group_ids
  * @property int $category_id
  * @property string $race
  * @property array $sku

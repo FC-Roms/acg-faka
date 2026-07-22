@@ -130,28 +130,16 @@
                             </span>
                         </a>
                     </li>
-                </ul>
-            </div>
-
-            <div class="mf-nav-group">
-                <div class="mf-nav-group-label">邀请</div>
-                <ul class="mf-side-nav">
+                    #{if $showInviteRewardMenu}
                     <li class="mf-nav-item #{if $title=='邀请奖励'}is-active#{/if}">
-                        #{if $showInviteRewardMenu}
                         <a href="/user/inviteReward/index">
                             <i class="fa-duotone fa-regular fa-user-plus"></i>
                             <span class="mf-nav-copy">
                                 <strong>邀请奖励</strong>
                             </span>
                         </a>
-                        #{/if}
                     </li>
-                </ul>
-            </div>
-
-            <div class="mf-nav-group">
-                <div class="mf-nav-group-label">优惠券</div>
-                <ul class="mf-side-nav">
+                    #{/if}
                     <li class="mf-nav-item #{if $title=='我的优惠券'}is-active#{/if}">
                         <a href="/user/couponwallet/index">
                             <i class="fa-duotone fa-regular fa-ticket-perforated"></i>

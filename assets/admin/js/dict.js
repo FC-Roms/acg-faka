@@ -118,6 +118,7 @@ const _Dict = new class _Dict extends _DictUtil {
                 {id: 0, "name": format.badge("不限", "a-badge-success")},
                 {id: 1, "name": format.badge("新客绑定邮箱/手机", "a-badge-warning")},
                 {id: 2, "name": format.badge("登录会员每人1次", "a-badge-primary")},
+                {id: 3, "name": format.badge("指定QQ群成员每人1次", "a-badge-info")},
             ],
             "_coupon_status": [
                 {id: 0, "name": format.badge("正常使用", "a-badge-success")},

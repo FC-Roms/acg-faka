@@ -272,7 +272,8 @@ CREATE TABLE `acg_coupon`  (
                                      `use_life` int UNSIGNED NOT NULL DEFAULT 0 COMMENT '已使用次数',
                                      `race` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '商品类别',
                                      `sku` json DEFAULT NULL COMMENT 'SKU',
-                                     `user_limit` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '使用限制：0=不限，1=仅限绑定邮箱或手机号的新用户，2=登录会员每人限用一次',
+                                     `user_limit` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '使用限制：0=不限，1=仅限绑定邮箱或手机号的新用户，2=登录会员每人限用一次，3=指定QQ群成员每人限用一次',
+                                     `group_ids` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '群优惠券适用群号，多个使用|分隔',
                                      PRIMARY KEY (`id`) USING BTREE,
                                      UNIQUE INDEX `code`(`code` ASC) USING BTREE,
                                      INDEX `commodity_id`(`commodity_id` ASC) USING BTREE,
@@ -284,6 +285,26 @@ CREATE TABLE `acg_coupon`  (
                                      INDEX `note`(`note` ASC) USING BTREE,
                                      INDEX `user_limit`(`user_limit` ASC) USING BTREE,
                                      INDEX `race`(`race` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+
+
+DROP TABLE IF EXISTS `acg_coupon_group_member`;
+CREATE TABLE `acg_coupon_group_member` (
+                                           `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+                                           `qq` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                                           `target_email` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                                           `group_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+                                           `nickname` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                           `source` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+                                           `create_time` datetime NOT NULL,
+                                           `update_time` datetime NULL DEFAULT NULL,
+                                           `last_request_time` datetime NULL DEFAULT NULL,
+                                           PRIMARY KEY (`id`) USING BTREE,
+                                           UNIQUE INDEX `uk_coupon_group_member` (`qq`, `group_id`) USING BTREE,
+                                           INDEX `coupon_group_member_email_index` (`target_email`) USING BTREE,
+                                           INDEX `coupon_group_member_group_index` (`group_id`) USING BTREE,
+                                           INDEX `coupon_group_member_source_index` (`source`) USING BTREE,
+                                           INDEX `coupon_group_member_create_time_index` (`create_time`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
 
 

@@ -4,6 +4,7 @@ declare (strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Interceptor\ManageSession;
+use App\Support\CouponGroup;
 use App\Util\Client;
 use Illuminate\Database\Capsule\Manager;
 use Illuminate\Database\Schema\Blueprint;
@@ -46,11 +47,13 @@ class Patch extends \App\Controller\Base\View\Manage
     {
         if (!Manager::schema()->hasColumn("coupon", "user_limit")) {
             Manager::schema()->table("coupon", function (Blueprint $blueprint) {
-                $blueprint->tinyInteger("user_limit")->unsigned()->default(0)->comment("使用限制：0=不限，1=仅限绑定邮箱或手机号的新用户，2=登录会员每人限用一次")->after("sku");
+                $blueprint->tinyInteger("user_limit")->unsigned()->default(0)->comment("使用限制：0=不限，1=仅限绑定邮箱或手机号的新用户，2=登录会员每人限用一次，3=指定QQ群成员每人限用一次")->after("sku");
                 $blueprint->index("user_limit");
             });
         }
 
-        Client::redirect("/admin/dashboard/index", "优惠券新用户限制字段安装成功。", 5);
+        CouponGroup::ensureSchema();
+
+        Client::redirect("/admin/dashboard/index", "优惠券使用人群字段安装成功。", 5);
     }
 }

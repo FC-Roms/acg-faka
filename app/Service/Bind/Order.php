@@ -21,6 +21,7 @@ use App\Model\UserCommodity;
 use App\Model\UserGroup;
 use App\Service\Email;
 use App\Service\Shared;
+use App\Support\CouponGroup;
 use App\Support\CouponOpenApi;
 use App\Util\Client;
 use App\Util\Date;
@@ -326,7 +327,7 @@ class Order implements \App\Service\Order
 
     /**
      * 校验优惠券使用人群限制。
-     * 1=仅限绑定联系方式的新用户，2=登录会员每人限用一次。
+     * 1=仅限绑定联系方式的新用户，2=登录会员每人限用一次，3=指定QQ群成员每人限用一次。
      * @throws JSONException
      */
     private function validateCouponUserLimit(Coupon $coupon, Commodity $commodity, ?User $user): void
@@ -335,6 +336,11 @@ class Order implements \App\Service\Order
 
         $userLimit = (int)($coupon->user_limit ?? 0);
         if ($userLimit === 0) {
+            return;
+        }
+
+        if ($userLimit === CouponGroup::USER_LIMIT) {
+            CouponGroup::validate($coupon, $user);
             return;
         }
 
@@ -790,7 +796,8 @@ class Order implements \App\Service\Order
 
             //优惠券
             if (!empty($coupon)) {
-                $voucher = Coupon::query()->where("code", $coupon)->first();
+                // 群券是多人共享券，核销时锁定券记录，保证“每会员每券一次”的检查与写单串行完成。
+                $voucher = Coupon::query()->where("code", $coupon)->lockForUpdate()->first();
                 if (!$voucher) {
                     throw new JSONException("优惠券不存");
                 }
@@ -800,9 +807,11 @@ class Order implements \App\Service\Order
                 $this->validateCouponUserLimit($voucher, $commodity, $user);
                 $voucher->service_time = $date;
                 $voucher->use_life = $voucher->use_life + 1;
-                $voucher->life = $voucher->life - 1;
-                if ($voucher->life <= 0) {
-                    $voucher->status = 1;
+                if (!CouponGroup::isGroupCoupon($voucher)) {
+                    $voucher->life = $voucher->life - 1;
+                    if ($voucher->life <= 0) {
+                        $voucher->status = 1;
+                    }
                 }
                 $voucher->trade_no = $order->trade_no;
                 $voucher->save();

@@ -1,6 +1,11 @@
 !function () {
     let table, _createForms = [], _createSearchs = [];
 
+    const userLimitDict = typeof _Dict !== 'undefined' ? _Dict.data?._coupon_user_limit : null;
+    if (Array.isArray(userLimitDict) && !userLimitDict.some(item => Number(item.id) === 3)) {
+        userLimitDict.push({id: 3, name: format.badge("指定QQ群成员每人1次", "a-badge-info")});
+    }
+
     // 生成优惠券成功后的结果弹窗(对标查看卡密 .md-secret):成功/失败徽章 + 券码块 + 复制/下载
     const openCouponResult = (data) => {
         const codes = data.code || '';
@@ -157,10 +162,29 @@
                             dict: [
                                 {id: 0, name: "不限"},
                                 {id: 1, name: "新客绑定邮箱/手机"},
-                                {id: 2, name: "登录会员每人1次"}
+                                {id: 2, name: "登录会员每人1次"},
+                                {id: 3, name: "指定QQ群成员每人1次"}
                             ],
                             default: 0,
-                            placeholder: "可限制新客使用，或限制登录会员每人只能使用1次"
+                            placeholder: "群优惠券通过 AstrBot 入群记录验证，每个群成员限用1次",
+                            change: (_, value) => {
+                                if (Number(value) === 3) {
+                                    _.show("group_ids");
+                                    _.hide("life");
+                                    _.setInput("life", "1");
+                                } else {
+                                    _.hide("group_ids");
+                                    _.setInput("group_ids", "");
+                                    _.show("life");
+                                }
+                            }
+                        },
+                        {
+                            title: "指定QQ群号",
+                            name: "group_ids",
+                            type: "input",
+                            hide: true,
+                            placeholder: "多个群号使用 | 分隔，例如：123456|654321"
                         },
                         {
                             title: "面值(金额/百分比)",
@@ -206,6 +230,7 @@
     table.setUpdate("/admin/api/card/save");
     table.setFloatMessage([
         {field: 'create_time', title: '创建时间'}
+        , {field: 'group_ids', title: '适用QQ群'}
         , {
             field: 'service_time', title: '使用时间'
         }
@@ -266,7 +291,7 @@
                 return format.badge(item.expire_time, "a-badge-warning");
             }
         }
-        , {field: 'life', title: '剩余次数'}
+        , {field: 'life', title: '剩余次数', formatter: (_, item) => Number(item.user_limit) === 3 ? '按群成员验证' : _}
         , {field: 'use_life', title: '已使用次数'}
         , {field: 'note', title: '备注信息'}
         , {
