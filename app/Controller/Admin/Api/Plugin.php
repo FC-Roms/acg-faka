@@ -6,6 +6,7 @@ namespace App\Controller\Admin\Api;
 use App\Consts\Hook;
 use App\Controller\Base\API\Manage;
 use App\Interceptor\ManageSession;
+use App\Model\ManageLog;
 use App\Util\Theme;
 use Kernel\Annotation\Interceptor;
 use Kernel\Annotation\Post;
@@ -108,10 +109,12 @@ class Plugin extends Manage
             if ((int)$map['STATUS'] == 1) {
                 _plugin_start($id);
                 $this->syncPluginStatus($id, $config, 1);
+                ManageLog::log($this->getManage(), "启动了插件({$id})");
                 return $this->json(200, "插件已启动");
             } else if ((int)$map['STATUS'] == 0) {
                 _plugin_stop($id);
                 $this->syncPluginStatus($id, $config, 0);
+                ManageLog::log($this->getManage(), "停止了插件({$id})");
                 return $this->json(200, "插件已停止");
             }
         }
@@ -125,6 +128,7 @@ class Plugin extends Manage
 
         $configFile = BASE_PATH . '/app/Plugin/' . $id . '/Config/Config.php';
         setConfig($config, $configFile);
+        ManageLog::log($this->getManage(), "修改了插件({$id})的配置");
         return $this->json(200, '配置已生效');
     }
 
@@ -167,6 +171,7 @@ class Plugin extends Manage
             $config[$k] = is_scalar($v) ? urldecode((string)$v) : $v;
         }
         setConfig($config, BASE_PATH . "/app/View/User/Theme/{$id}/Setting.php");
+        ManageLog::log($this->getManage(), "修改了主题({$id})的配置");
         return $this->json(200, '模板设置已生效');
     }
 
@@ -188,6 +193,7 @@ class Plugin extends Manage
     public function ClearPluginLog(#[Post] string $handle): array
     {
         \App\Util\Plugin::ClearPluginLog($handle);
+        ManageLog::log($this->getManage(), "清空了插件({$handle})的运行日志");
         return $this->json(200, 'success');
     }
 

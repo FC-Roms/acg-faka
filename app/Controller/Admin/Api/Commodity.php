@@ -90,6 +90,8 @@ class Commodity extends Manage
         });
 
         $clientUrl = Client::getUrl();
+        //无限极分类完整路径：一次性加载分类扁平映射，循环内复用避免 N+1
+        $categoryFlatMap = $data['list'] ? \App\Model\Category::flatMap() : [];
         foreach ($data['list'] as &$val) {
             $url = $clientUrl;
             if ($val['owner'] && $val['owner']['business']) {
@@ -102,6 +104,8 @@ class Commodity extends Manage
             }
             $val['share_url'] = $url . "/item/{$val['id']}";
             $val['order_sold'] = \App\Model\Commodity::getDisplaySold($val['order_sold_real'] ?? 0, $val['sold_base'] ?? 0);
+            //顶级分类 -> 子分类 -> 商品所属分类
+            $val['category_path'] = \App\Model\Category::resolvePath((int)($val['category_id'] ?? 0), $categoryFlatMap);
         }
 
 

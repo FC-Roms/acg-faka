@@ -4,10 +4,12 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>登录 - #{$config.title}</title>
+    <script>(function(){try{var p=localStorage.getItem('admin-theme')||'auto';var d=p==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;var e=document.documentElement;e.setAttribute('data-theme',d);e.setAttribute('data-theme-pref',p);}catch(_){document.documentElement.setAttribute('data-theme','light');}})();</script>
     #{css(
     [
     "/assets/common/css/_.css",
-    "/assets/admin/css/auth.css"
+    "/assets/admin/css/auth.css",
+    "/assets/admin/css/_material-auth.css"
     ],
     [
     "/assets/admin/css/style.bundle.css",
@@ -18,7 +20,9 @@
     "/assets/common/css/toastr.min.css",
     "/assets/common/js/table/bootstrap-table.css",
     "/assets/common/js/layer/theme/default/layer.css",
-    "/assets/admin/css/auth.css"
+    "/assets/admin/css/auth.css",
+    "/assets/common/css/md-tokens.css",
+    "/assets/admin/css/material-auth.css"
     ])}
 
     #{js("/assets/common/js/ready.js")}
@@ -61,6 +65,19 @@
                             <circle cx="12" cy="12" r="3"/>
                         </svg>
                     </button>
+                </div>
+                <div class="ay-field">
+                    <input id="ay-captcha" name="captcha" class="ay-input" type="text" inputmode="numeric"
+                           maxlength="4" autocomplete="off" placeholder=" " required>
+                    <span class="ay-label">验证码</span>
+                    <img id="ay-captcha-img" class="ay-captcha" src="/user/captcha/image?action=adminLogin"
+                         onclick="this.src='/user/captcha/image?action=adminLogin&t='+Date.now()"
+                         title="看不清？点我刷新" alt="验证码">
+                </div>
+                <div class="ay-field">
+                    <input id="ay-code" name="code" class="ay-input" type="text" inputmode="numeric"
+                           autocomplete="one-time-code" maxlength="6" placeholder=" ">
+                    <span class="ay-label">谷歌验证码（未绑定可留空）</span>
                 </div>
 
                 <div class="ay-row">
