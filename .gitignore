@@ -1,0 +1,13 @@
+# 本地部署配置与密钥
+config/database.local.php
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+private/
+
+# 仓库外备份目录误放入项目时也不提交
+*-private-backup/
+本地私密内容*

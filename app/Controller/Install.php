@@ -114,7 +114,8 @@ class Install extends User
 
         //导入数据库
         SQL::import($sqlFile . ".tmp", $host, $map['database'], $map['username'], $map['password'], $map['prefix']);
-        //设置数据库账号密码
+        //真实数据库凭据只写入 Git 已忽略的本地配置，避免安装后误提交到公开仓库。
+        $databaseConfigFile = BASE_PATH . "/config/database.local.php";
         setConfig([
             'driver' => 'mysql',
             'host' => $host,
@@ -124,9 +125,9 @@ class Install extends User
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => $map['prefix']
-        ], BASE_PATH . "/config/database.php");
+        ], $databaseConfigFile);
 
-        Opcache::invalidate(BASE_PATH . "/config/database.php");
+        Opcache::invalidate($databaseConfigFile);
 
         unlink($sqlFile . ".tmp");
         file_put_contents(BASE_PATH . '/kernel/Install/Lock', "");
