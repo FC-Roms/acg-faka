@@ -210,15 +210,17 @@ main() {
     fi
     LOCK_ACQUIRED=1
 
-    local current_branch remote_head stash_before stash_after stash_name env_path relative_path
+    local current_branch remote_head stash_before stash_after stash_name env_path relative_path original_umask
     current_branch="$(git branch --show-current)"
     [[ "$current_branch" == "$BRANCH" ]] || die "当前分支为 $current_branch，请切换到 $BRANCH 后重试。"
 
     git remote get-url "$REMOTE" >/dev/null 2>&1 || die "Git 远端 $REMOTE 不存在。"
 
     ORIGINAL_HEAD="$(git rev-parse HEAD)"
+    original_umask="$(umask)"
     umask 077
     mkdir -p -- "$BACKUP_DIR"
+    umask "$original_umask"
 
     log "正在备份服务器配置和本地修改……"
     git branch "$BACKUP_BRANCH" "$ORIGINAL_HEAD"
@@ -262,7 +264,10 @@ main() {
         die "服务器分支与远端已经分叉，已停止更新，未执行强制覆盖。"
     fi
 
+    # Git 以 root 更新时也要保证 PHP-FPM 可读，避免备份阶段的 077 权限泄漏到程序文件。
+    umask 022
     git merge --ff-only "$remote_head"
+    umask "$original_umask"
 
     shopt -s nullglob
     for env_path in "$BACKUP_DIR"/.env "$BACKUP_DIR"/.env.*; do
