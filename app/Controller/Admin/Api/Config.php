@@ -292,12 +292,18 @@ class Config extends Manage
         } catch (\Throwable $e) {
             throw new JSONException('无法创建安全的 LOGO 临时文件');
         }
-        if (!copy($source, $temporary)) {
-            throw new JSONException('LOGO 保存失败，请检查目录权限');
+        $target = BASE_PATH . '/favicon.ico';
+        if (@copy($source, $temporary) && @rename($temporary, $target)) {
+            return;
         }
-        if (!rename($temporary, BASE_PATH . '/favicon.ico')) {
-            @unlink($temporary);
-            throw new JSONException('LOGO 保存失败，请检查目录权限');
+        @unlink($temporary);
+
+        // 宝塔等部署通常只允许 PHP-FPM 改写已存在的 favicon.ico，不允许在项目根目录新建临时文件。
+        // 原子替换不可用时退化为带锁写入，无需将整个项目根目录开放给 Web 用户。
+        $contents = @file_get_contents($source);
+        if ($contents === false || !is_file($target) || !is_writable($target)
+            || @file_put_contents($target, $contents, LOCK_EX) === false) {
+            throw new JSONException('LOGO 保存失败，请检查 favicon.ico 写入权限');
         }
         // The uploaded source and its acg_upload record are intentionally kept.
         // A routine settings save must not physically delete an uploaded file.

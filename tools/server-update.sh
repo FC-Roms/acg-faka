@@ -210,6 +210,11 @@ restore_application_permissions() {
         chmod -R u+rwX "$path"
     done
 
+    if [[ -f "$REPO_DIR/favicon.ico" && ! -L "$REPO_DIR/favicon.ico" ]]; then
+        chown "$web_user:$web_group" "$REPO_DIR/favicon.ico"
+        chmod 644 "$REPO_DIR/favicon.ico"
+    fi
+
     shopt -s nullglob
     for private_file in \
         "$REPO_DIR/config/database.local.php" \
@@ -232,15 +237,15 @@ clear_cache() {
         log "正在重建应用容器……"
         "${COMPOSE[@]}" up -d --build app
 
-        log "正在清理容器内前端缓存……"
+        log "正在清理容器内视图缓存……"
         "${COMPOSE[@]}" exec -T app sh -lc \
-            'if [ -d /var/www/html/assets/cache ]; then find /var/www/html/assets/cache -mindepth 1 -delete; fi'
+            'if [ -d /var/www/html/runtime/view ]; then find /var/www/html/runtime/view -mindepth 1 -delete; fi'
         return 0
     fi
 
-    if [[ -d "$REPO_DIR/assets/cache" ]]; then
-        log "正在清理前端缓存……"
-        find "$REPO_DIR/assets/cache" -mindepth 1 -delete
+    if [[ -d "$REPO_DIR/runtime/view" ]]; then
+        log "正在清理视图缓存……"
+        find "$REPO_DIR/runtime/view" -mindepth 1 -delete
     fi
 
     if [[ -n "$RESTART_COMMAND" ]]; then

@@ -42,7 +42,19 @@ class Upload implements \App\Service\Upload
         if ($userId !== null) {
             $query->where("user_id", $userId);
         }
-        return $query->first()?->path;
+
+        // 去重记录必须同时具有真实文件。更新或人工清理后若只剩数据库记录，
+        // 不能删掉用户刚上传的新文件再返回一个失效路径。
+        foreach ($query->orderByDesc('id')->get(['id', 'path']) as $upload) {
+            $path = (string)$upload->path;
+            clearstatcache(true, BASE_PATH . $path);
+            if ($path !== '' && is_file(BASE_PATH . $path)) {
+                return $path;
+            }
+            $upload->delete();
+        }
+
+        return null;
     }
 
     /**
