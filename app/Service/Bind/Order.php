@@ -136,6 +136,7 @@ class Order implements \App\Service\Order
      */
     public function valuation(Commodity|int $commodity, int $num = 1, ?string $race = null, ?array $sku = [], ?int $cardId = null, ?string $coupon = null, ?UserGroup $group = null, ?User $user = null): string
     {
+        Commodity::syncExpiredSeckill();
         if (is_int($commodity)) {
             $commodity = Commodity::query()->find($commodity);
         }
@@ -145,6 +146,8 @@ class Order implements \App\Service\Order
         }
 
         $commodity = clone $commodity;
+        $seckillActive = $commodity->isSeckillActive();
+        $seckillPrice = $commodity->seckill_price;
         $price = (new Decimal($group ? $commodity->user_price : $commodity->price, 2));
 
         $levelPrice = $this->userDefinedPrice($commodity, $group);
@@ -211,6 +214,11 @@ class Order implements \App\Service\Order
                     $price = $price->add($_sku_price); //sku加价
                 }
             }
+        }
+
+        // 秒杀价格是当前商品的统一成交价，仍然允许叠加自选卡溢价、会员折扣和优惠券。
+        if ($seckillActive) {
+            $price = new Decimal($seckillPrice, 2);
         }
 
 
@@ -545,6 +553,7 @@ class Order implements \App\Service\Order
      */
     public function trade(?User $user, ?UserGroup $userGroup, array $map): array
     {
+        Commodity::syncExpiredSeckill();
         #CFG begin
         $commodityId = (int)$map['item_id'];//商品ID
         $contact = (string)$map['contact'];//联系方式

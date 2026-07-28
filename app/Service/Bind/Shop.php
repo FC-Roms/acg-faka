@@ -40,6 +40,8 @@ class Shop implements \App\Service\Shop
      */
     public function getCategory(?UserGroup $group): array
     {
+        Commodity::ensureSeckillColumns();
+        Commodity::syncExpiredSeckill();
         $category = Category::query()->withCount(['children as commodity_count' => function (Builder $builder) {
             $builder->where("status", 1);
         }])->where("status", 1)->orderBy("sort", "asc");
@@ -140,6 +142,8 @@ class Shop implements \App\Service\Shop
     public function getItem(int|string $commodityId, ?User $user = null, ?UserGroup $group = null): array
     {
         Commodity::ensureSoldBaseColumn();
+        Commodity::ensureSeckillColumns();
+        Commodity::syncExpiredSeckill();
 
         $commodity = Commodity::query()->with(['owner' => function (Relation $relation) {
             $relation->select(["id", "username", "avatar"]);
@@ -148,7 +152,7 @@ class Shop implements \App\Service\Shop
                 "only_user", "purchase_count", "category_id", "cover", "price", "user_price",
                 "status", "owner", "delivery_way", "contact_type", "password_status", "level_price",
                 "level_disable", "coupon", "shared_id", "shared_code", "shared_premium", "shared_premium_type", "seckill_status",
-                "seckill_start_time", "seckill_end_time", "draft_status", "draft_premium", "inventory_hidden",
+                "seckill_start_time", "seckill_end_time", "seckill_price", "seckill_expire_action", "draft_status", "draft_premium", "inventory_hidden",
                 "widget", "minimum", "maximum", "shared_sync", "config", "stock", "code", "shared_amount_sync", "shared_config_sync", "sold_base"])
             ->withCount(['order as order_sold' => function (Builder $relation) {
                 $relation->where("delivery_status", 1);
@@ -210,6 +214,14 @@ class Shop implements \App\Service\Shop
                 $commodity->seckill_status = $new->seckill_status = $remoteItem['seckill_status'];
                 $commodity->seckill_start_time = $new->seckill_start_time = $remoteItem['seckill_start_time'];
                 $commodity->seckill_end_time = $new->seckill_end_time = $remoteItem['seckill_end_time'];
+                if (array_key_exists('seckill_price', $remoteItem)) {
+                    $commodity->seckill_price = $new->seckill_price = $remoteItem['seckill_price'] !== null
+                        ? (float)$this->shared->AdjustmentAmount($new->shared_premium_type, $new->shared_premium, $remoteItem['seckill_price'])
+                        : null;
+                }
+                if (array_key_exists('seckill_expire_action', $remoteItem)) {
+                    $commodity->seckill_expire_action = $new->seckill_expire_action = (int)$remoteItem['seckill_expire_action'];
+                }
                 $commodity->widget = $new->widget = is_array($remoteItem['widget']) ? json_encode($remoteItem['widget']) : $remoteItem['widget'];
                 $commodity->minimum = $new->minimum = $remoteItem['minimum'];
                 $commodity->maximum = $new->maximum = $remoteItem['maximum'];
@@ -238,6 +250,8 @@ class Shop implements \App\Service\Shop
         }
 
         $array = $commodity->toArray();
+        $array['seckill_active'] = $commodity->isSeckillActive();
+        $array['seckill_original_price'] = $user ? $commodity->user_price : $commodity->price;
         $array['order_sold_real'] = (int)($array['order_sold'] ?? 0);
         $array['order_sold'] = Commodity::getDisplaySold($array['order_sold'] ?? 0, $array['sold_base'] ?? 0);
 
@@ -458,6 +472,9 @@ class Shop implements \App\Service\Shop
 
             $commodity->price = (new Decimal($commodity->price))->mul($userCommodity->premium / 100)->add($commodity->price)->getAmount();
             $commodity->user_price = (new Decimal($commodity->user_price))->mul($userCommodity->premium / 100)->add($commodity->user_price)->getAmount();
+            if ($commodity->seckill_price !== null) {
+                $commodity->seckill_price = (new Decimal($commodity->seckill_price))->mul($userCommodity->premium / 100)->add($commodity->seckill_price)->getAmount();
+            }
 
             if ($commodity->draft_premium > 0) {
                 $commodity->draft_premium = (new Decimal($commodity->draft_premium))->mul($userCommodity->premium / 100)->add($commodity->draft_premium)->getAmount();

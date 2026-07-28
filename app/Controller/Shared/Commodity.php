@@ -43,6 +43,8 @@ class Commodity extends Shared
      */
     private function getItems(): array
     {
+        \App\Model\Commodity::ensureSeckillColumns();
+        \App\Model\Commodity::syncExpiredSeckill();
         $items = Category::query()->with(['children' => function (Relation $relation) {
             $relation->where("api_status", 1)->where("status", 1);
         }])->where("status", 1)->get();

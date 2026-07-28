@@ -186,16 +186,28 @@
                             text: "启用",
                             change: (_, __) => {
                                 if (__ == 1) {
+                                    _.show('seckill_price');
                                     _.show('seckill_start_time');
                                     _.show('seckill_end_time');
+                                    _.show('seckill_expire_action');
                                 } else {
+                                    _.hide('seckill_price');
                                     _.hide('seckill_start_time');
                                     _.hide('seckill_end_time');
+                                    _.hide('seckill_expire_action');
                                 }
                             },
                             complete: (_, __) => {
                                 _.triggerOtherPopupChange("seckill_status", __);
                             }
+                        },
+                        {
+                            title: "秒杀价格",
+                            name: "seckill_price",
+                            type: "input",
+                            placeholder: "请输入秒杀价格",
+                            tips: "秒杀有效期内使用的售价，支持填写0",
+                            hide: true
                         },
                         {
                             title: "秒杀开始时间",
@@ -209,6 +221,14 @@
                             name: "seckill_end_time",
                             type: "date",
                             placeholder: "结束时间",
+                            hide: true
+                        },
+                        {
+                            title: "到期处理",
+                            name: "seckill_expire_action",
+                            type: "radio",
+                            dict: [{id: 0, name: "恢复原价"}, {id: 1, name: "下架商品"}],
+                            default: 0,
                             hide: true
                         },
                         {
@@ -574,6 +594,12 @@ ACC_JP_6M_0KLD-22MM-PP31║地区:日区·时长:6个月</pre>
         },
         {
             field: 'seckill_status', title: '商品秒杀', dict: "_commodity_api_status"
+        },
+        {
+            field: 'seckill_price', title: '秒杀价格'
+        },
+        {
+            field: 'seckill_expire_action', title: '秒杀到期处理', dict: [{id: 0, name: '恢复原价'}, {id: 1, name: '下架商品'}]
         },
         {
             field: 'seckill_start_time', title: '秒杀时间(开始)'

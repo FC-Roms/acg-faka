@@ -38,6 +38,8 @@ use Kernel\Exception\JSONException;
  * @property float $shared_premium
  * @property int $shared_premium_type
  * @property int $seckill_status
+ * @property float|null $seckill_price
+ * @property int $seckill_expire_action
  * @property int $api_status
  * @property int $draft_status
  * @property int $inventory_hidden
@@ -94,6 +96,8 @@ class Commodity extends Model
         'coupon' => 'integer',
         'shared_id' => 'integer',
         'seckill_status' => 'integer',
+        'seckill_price' => 'float',
+        'seckill_expire_action' => 'integer',
         'password_status' => 'integer',
         'category_id' => 'integer',
         'api_status' => 'integer',
@@ -113,6 +117,8 @@ class Commodity extends Model
     ];
 
     private static ?bool $soldBaseColumnReady = null;
+    private static ?bool $seckillColumnsReady = null;
+    private static bool $expiredSeckillSynced = false;
 
     public static function ensureSoldBaseColumn(): void
     {
@@ -132,6 +138,76 @@ class Commodity extends Model
     public static function getDisplaySold(int|string|null $realSold, int|string|null $soldBase): int
     {
         return max(0, (int)$realSold) + max(0, (int)$soldBase);
+    }
+
+    /**
+     * 确保秒杀扩展字段存在，兼容已安装旧版本的数据库。
+     */
+    public static function ensureSeckillColumns(): void
+    {
+        if (self::$seckillColumnsReady === true) {
+            return;
+        }
+
+        $schema = Manager::schema();
+        if (!$schema->hasColumn('commodity', 'seckill_price')) {
+            $schema->table('commodity', function (Blueprint $blueprint) {
+                $blueprint->decimal('seckill_price', 10, 2)->unsigned()->nullable()->default(null)->comment('秒杀价格')->after('seckill_end_time');
+            });
+        }
+
+        if (!$schema->hasColumn('commodity', 'seckill_expire_action')) {
+            $schema->table('commodity', function (Blueprint $blueprint) {
+                $blueprint->tinyInteger('seckill_expire_action')->unsigned()->default(0)->comment('秒杀到期处理：0=恢复原价，1=下架商品')->after('seckill_price');
+            });
+        }
+
+        self::$seckillColumnsReady = true;
+    }
+
+    /**
+     * 同步已结束的秒杀，避免到期下架依赖额外的定时任务。
+     */
+    public static function syncExpiredSeckill(): void
+    {
+        if (self::$expiredSeckillSynced) {
+            return;
+        }
+
+        self::ensureSeckillColumns();
+        $now = date('Y-m-d H:i:s');
+
+        self::query()
+            ->where('seckill_status', 1)
+            ->where('seckill_expire_action', 1)
+            ->whereNotNull('seckill_end_time')
+            ->where('seckill_end_time', '<=', $now)
+            ->update(['seckill_status' => 0, 'status' => 0]);
+
+        self::query()
+            ->where('seckill_status', 1)
+            ->where('seckill_expire_action', 0)
+            ->whereNotNull('seckill_end_time')
+            ->where('seckill_end_time', '<=', $now)
+            ->update(['seckill_status' => 0]);
+
+        self::$expiredSeckillSynced = true;
+    }
+
+    /**
+     * 判断当前商品是否处于秒杀有效期。
+     */
+    public function isSeckillActive(?int $timestamp = null): bool
+    {
+        if ((int)$this->seckill_status !== 1 || $this->seckill_price === null) {
+            return false;
+        }
+
+        $start = $this->seckill_start_time ? strtotime((string)$this->seckill_start_time) : false;
+        $end = $this->seckill_end_time ? strtotime((string)$this->seckill_end_time) : false;
+        $timestamp ??= time();
+
+        return $start !== false && $end !== false && $start <= $timestamp && $end >= $timestamp;
     }
 
     public function owner(): ?HasOne

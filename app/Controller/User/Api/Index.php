@@ -63,6 +63,8 @@ class Index extends User
     public function commodity(): array
     {
         Commodity::ensureSoldBaseColumn();
+        Commodity::ensureSeckillColumns();
+        Commodity::syncExpiredSeckill();
         $keywords = (string)$_GET['keywords'];
         $limit = (int)$_GET['limit'];
         $page = (int)$_GET['page'];
@@ -131,7 +133,8 @@ class Index extends User
                 'id', 'name', 'cover',
                 'status', 'delivery_way', 'price',
                 'user_price',
-                'level_disable', 'level_price', 'hide', 'owner', 'inventory_hidden', "recommend", 'category_id', 'stock', 'shared_id', 'sold_base'
+                'level_disable', 'level_price', 'hide', 'owner', 'inventory_hidden', "recommend", 'category_id', 'stock', 'shared_id', 'sold_base',
+                'seckill_status', 'seckill_start_time', 'seckill_end_time', 'seckill_price', 'seckill_expire_action'
             ])
             ->withCount(['order as order_sold' => function (Builder $relation) {
                 $relation->where("delivery_status", 1);
@@ -162,6 +165,14 @@ class Index extends User
         foreach ($data as $key => $val) {
             $data[$key]['order_sold_real'] = (int)($val['order_sold'] ?? 0);
             $data[$key]['order_sold'] = Commodity::getDisplaySold($val['order_sold'] ?? 0, $val['sold_base'] ?? 0);
+            $seckillActive = $commodity[$key]->isSeckillActive();
+            $data[$key]['seckill_active'] = $seckillActive;
+            if ($seckillActive) {
+                $data[$key]['seckill_original_price'] = $user ? $commodity[$key]->user_price : $commodity[$key]->price;
+                if (!$user) {
+                    $data[$key]['price'] = $commodity[$key]->seckill_price;
+                }
+            }
             $parseGroupConfig = Commodity::parseGroupConfig($val['level_price'], $userGroup);
             if (!in_array((string)$val['category_id'], $cates) || $val['hide'] == 1 && (!$parseGroupConfig || !isset($parseGroupConfig['show']) || $parseGroupConfig['show'] != 1)) {
                 //隐藏商品
@@ -196,6 +207,9 @@ class Index extends User
                 if ($var->premium > 0) {
                     $data[$key]['price'] = (new Decimal($data[$key]['price'], 2))->mul($var->premium / 100)->add($data[$key]['price'])->getAmount();
                     $data[$key]['user_price'] = (new Decimal($data[$key]['user_price'], 2))->mul($var->premium / 100)->add($data[$key]['user_price'])->getAmount();
+                    if (isset($data[$key]['seckill_original_price'])) {
+                        $data[$key]['seckill_original_price'] = (new Decimal($data[$key]['seckill_original_price'], 2))->mul($var->premium / 100)->add($data[$key]['seckill_original_price'])->getAmount();
+                    }
                 }
                 if ($var->name) {
                     $data[$key]['name'] = $var->name;

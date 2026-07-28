@@ -193,6 +193,37 @@ body {
     color: #ef7d93;
 }
 
+.seckill-price {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .45rem;
+    flex-wrap: wrap;
+}
+
+.seckill-original-price {
+    color: #8b93a1;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: line-through;
+}
+
+.seckill-original-price .unit {
+    color: #8b93a1;
+    font-size: 12px;
+}
+
+.seckill-current-price {
+    color: #ff4d5e;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.seckill-label {
+    color: #ff4d5e;
+    font-size: 14px;
+    font-weight: 500;
+}
+
 .meta {
     color: var(--acg-text-muted);
 }

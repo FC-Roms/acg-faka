@@ -37,6 +37,8 @@ class Commodity extends Manage
     public function data(): array
     {
         \App\Model\Commodity::ensureSoldBaseColumn();
+        \App\Model\Commodity::ensureSeckillColumns();
+        \App\Model\Commodity::syncExpiredSeckill();
         $map = $_POST;
         $get = new Get(\App\Model\Commodity::class);
         $get->setPaginate((int)$this->request->post("page"), (int)$this->request->post("limit"));
@@ -121,8 +123,12 @@ class Commodity extends Manage
     public function save(Request $request): array
     {
         \App\Model\Commodity::ensureSoldBaseColumn();
+        \App\Model\Commodity::ensureSeckillColumns();
         $map = $request->post(flags: Filter::NORMAL);
         $map['sold_base'] = max(0, (int)($map['sold_base'] ?? 0));
+        $map['seckill_status'] = (int)($map['seckill_status'] ?? 0);
+        $map['seckill_expire_action'] = (int)($map['seckill_expire_action'] ?? 0) === 1 ? 1 : 0;
+        $map['seckill_price'] = ($map['seckill_price'] ?? '') === '' ? null : (float)$map['seckill_price'];
 
         //create new
         if ((int)$map['id'] == 0) {
@@ -151,6 +157,9 @@ class Commodity extends Manage
         if ($map['seckill_status'] == 1) {
             if (!$map['seckill_start_time'] || !$map['seckill_end_time']) {
                 throw new JSONException("您开启了秒杀功能，所以请指定秒杀的开始时间和结束时间哦(｡￫‿￩｡)");
+            }
+            if ($map['seckill_price'] === null || $map['seckill_price'] < 0) {
+                throw new JSONException("您开启了秒杀功能，请指定有效的秒杀价格");
             }
             if (strtotime($map['seckill_end_time']) < strtotime($map['seckill_start_time'])) {
                 throw new JSONException("秒杀结束时间不能低于秒杀开始时间哦，请认真指定秒杀结束时间(｡￫‿￩｡)");

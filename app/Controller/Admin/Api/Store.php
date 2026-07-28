@@ -143,6 +143,7 @@ class Store extends Manage
      */
     public function addItem(Request $request): array
     {
+        \App\Model\Commodity::ensureSeckillColumns();
         $map = $request->post(flags: Filter::NORMAL);
 
         $categoryId = (int)$map['category_id'];
@@ -213,6 +214,10 @@ class Store extends Manage
                 $commodity->shared_premium = $premium;
                 $commodity->shared_premium_type = $premiumType;
                 $commodity->seckill_status = $item['seckill_status'];
+                $commodity->seckill_price = array_key_exists('seckill_price', $item) && $item['seckill_price'] !== null
+                    ? (float)$this->shared->AdjustmentAmount($premiumType, $premium, $item['seckill_price'])
+                    : null;
+                $commodity->seckill_expire_action = (int)($item['seckill_expire_action'] ?? 0) === 1 ? 1 : 0;
                 $commodity->shared_sync = $sharedSync;
                 $commodity->shared_amount_sync = $sharedAmountSync;
                 $commodity->shared_config_sync = $sharedConfigSync;

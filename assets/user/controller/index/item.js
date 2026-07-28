@@ -35,7 +35,12 @@
             url: "/user/api/index/valuation",
             data: _getPostData(),
             done: res => {
-                $price.html(`<span class="unit">¥</span>${format.amountRemoveTrailingZeros(res.data.price)}`);
+                const currentPrice = format.amountRemoveTrailingZeros(res.data.price);
+                const originalPrice = format.amountRemoveTrailingZeros(_item.seckill_original_price);
+                $price.toggleClass("seckill-price", !!_item.seckill_active);
+                $price.html(_item.seckill_active
+                    ? `<span class="seckill-original-price"><span class="unit">¥</span>${originalPrice}</span><span class="seckill-current-price"><span class="unit">¥</span>${currentPrice}</span><span class="seckill-label">限时特价</span>`
+                    : `<span class="unit">¥</span>${currentPrice}`);
                 _price = res.data.price;
                 _available = true;
             },
@@ -77,6 +82,11 @@
                 } else {
                     //已结束
                     $snapUp.removeClass("badge-soft-success").addClass("badge-soft-muted").html(`抢购已结束`);
+                    if (_item.seckill_active) {
+                        _item.seckill_active = false;
+                        _item.seckill_status = 0;
+                        _Abacus();
+                    }
                     $cashPay.fadeOut(150);
                     resolve(false);
                 }

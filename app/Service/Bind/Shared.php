@@ -596,6 +596,7 @@ class Shared implements \App\Service\Shared
      */
     public function syncRemoteItem(Commodity|int $commodity): bool
     {
+        Commodity::ensureSeckillColumns();
         if (is_int($commodity)) {
             $commodity = Commodity::query()->find($commodity);
         }
@@ -638,6 +639,14 @@ class Shared implements \App\Service\Shared
         $commodity->seckill_status = $remoteItem['seckill_status'];
         $commodity->seckill_start_time = $remoteItem['seckill_start_time'];
         $commodity->seckill_end_time = $remoteItem['seckill_end_time'];
+        if (array_key_exists('seckill_price', $remoteItem)) {
+            $commodity->seckill_price = $remoteItem['seckill_price'] !== null
+                ? (float)$this->AdjustmentAmount($commodity->shared_premium_type, $commodity->shared_premium, $remoteItem['seckill_price'])
+                : null;
+        }
+        if (array_key_exists('seckill_expire_action', $remoteItem)) {
+            $commodity->seckill_expire_action = (int)$remoteItem['seckill_expire_action'];
+        }
         $commodity->widget = is_array($remoteItem['widget']) ? json_encode($remoteItem['widget']) : $remoteItem['widget'];
         $commodity->minimum = $remoteItem['minimum'];
         $commodity->maximum = $remoteItem['maximum'];

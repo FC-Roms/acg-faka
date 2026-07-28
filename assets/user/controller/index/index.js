@@ -23,7 +23,11 @@
               </div>
               <p class="goods-title">${item.name}</p>
               <div class="stat-row mb-1">
-                <div class="price"><span class="unit">¥</span>${item.price}</div>
+                <div class="price ${item.seckill_active ? `seckill-price` : ``}">
+                  ${item.seckill_active ? `<span class="seckill-original-price"><span class="unit">¥</span>${item.seckill_original_price}</span>` : ``}
+                  <span class="seckill-current-price"><span class="unit">¥</span>${item.price}</span>
+                  ${item.seckill_active ? `<span class="seckill-label">限时特价</span>` : ``}
+                </div>
               </div>
               <div class="stat-bottom"><span>库存：${item.stock}</span><span>已售：${item.order_sold}</span></div>
             </div>

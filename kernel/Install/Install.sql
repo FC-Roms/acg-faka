@@ -158,6 +158,8 @@ CREATE TABLE `acg_commodity`  (
                                         `seckill_status` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '商品秒杀：0=关闭，1=开启',
                                         `seckill_start_time` datetime NULL DEFAULT NULL COMMENT '秒杀开始时间',
                                         `seckill_end_time` datetime NULL DEFAULT NULL COMMENT '秒杀结束时间',
+                                        `seckill_price` decimal(10, 2) UNSIGNED NULL DEFAULT NULL COMMENT '秒杀价格',
+                                        `seckill_expire_action` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '秒杀到期处理：0=恢复原价，1=下架商品',
                                         `draft_status` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '指定卡密购买：0=关闭，1=启用',
                                         `draft_premium` decimal(10, 2) UNSIGNED NULL DEFAULT 0.00 COMMENT '指定卡密购买时溢价',
                                         `inventory_hidden` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '隐藏库存：0=否，1=是',
@@ -189,7 +191,7 @@ CREATE TABLE `acg_commodity`  (
                                         INDEX `recommend`(`recommend` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = DYNAMIC;
 
-INSERT INTO `acg_commodity` VALUES (1, 1, 'DEMO', '<p>该商品是演示商品</p>', '/favicon.ico', 0.00, 1.00, 0.90, 1, 0, '2021-11-26 18:01:30', 1, '8AE80574F3CA98BE', 1, 0, '', 0, 0, 1, 1, NULL, '', 0.00 , NULL,999999, 0, 0, NULL, NULL, 0, 0.00, 0, NULL, 0, 0, 0, 0, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0 ,0 ,0);
+INSERT INTO `acg_commodity` VALUES (1, 1, 'DEMO', '<p>该商品是演示商品</p>', '/favicon.ico', 0.00, 1.00, 0.90, 1, 0, '2021-11-26 18:01:30', 1, '8AE80574F3CA98BE', 1, 0, '', 0, 0, 1, 1, NULL, '', 0.00 , NULL,999999, 0, 0, NULL, NULL, NULL, 0, 0, 0.00, 0, NULL, 0, 0, 0, 0, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0 ,0 ,0);
 
 
 
