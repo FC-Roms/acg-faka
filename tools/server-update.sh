@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # acg-faka 服务器安全更新脚本
 # 默认用法：bash tools/server-update.sh
-# 可选变量：UPDATE_REPO_DIR、UPDATE_REMOTE、UPDATE_BRANCH、UPDATE_BACKUP_DIR、UPDATE_SKIP_MIGRATION、UPDATE_RESTART_COMMAND
+# 可选变量：UPDATE_REPO_DIR、UPDATE_REMOTE、UPDATE_BRANCH、UPDATE_BACKUP_DIR、UPDATE_SKIP_MIGRATION、UPDATE_RESTART_COMMAND、UPDATE_WEB_USER
 set -Eeuo pipefail
 
 IFS=$'\n\t'
@@ -176,6 +176,57 @@ run_migration() {
     done
 }
 
+restore_application_permissions() {
+    local web_user web_group path private_file
+
+    if [[ "$(id -u)" -ne 0 ]]; then
+        warn "当前不是 root，已跳过插件和运行目录所有权恢复。"
+        return 0
+    fi
+
+    web_user="${UPDATE_WEB_USER:-$(ps -eo user=,comm= | awk '$2 ~ /^php-fpm/ && $1 != "root" {print $1; exit}')}"
+    if [[ -z "$web_user" ]] || ! id "$web_user" >/dev/null 2>&1; then
+        if id www >/dev/null 2>&1; then
+            web_user="www"
+        elif id www-data >/dev/null 2>&1; then
+            web_user="www-data"
+        else
+            warn "无法识别 PHP-FPM 用户，已跳过插件和运行目录所有权恢复。"
+            return 0
+        fi
+    fi
+    web_group="$(id -gn "$web_user")"
+
+    for path in \
+        "$REPO_DIR/app/Pay" \
+        "$REPO_DIR/app/Plugin" \
+        "$REPO_DIR/app/View/User/Theme" \
+        "$REPO_DIR/runtime" \
+        "$REPO_DIR/assets/cache" \
+        "$REPO_DIR/kernel/Install/OS" \
+        "$REPO_DIR/kernel/Install/Update"; do
+        [[ -e "$path" ]] || continue
+        chown -R "$web_user:$web_group" "$path"
+        chmod -R u+rwX "$path"
+    done
+
+    shopt -s nullglob
+    for private_file in \
+        "$REPO_DIR/config/database.local.php" \
+        "$REPO_DIR/config/store.php" \
+        "$REPO_DIR/.env" \
+        "$REPO_DIR"/.env.* \
+        "$REPO_DIR/.user.ini"; do
+        [[ -f "$private_file" ]] || continue
+        [[ "$(basename -- "$private_file")" == ".env.example" ]] && continue
+        chown "$web_user:$web_group" "$private_file"
+        chmod 600 "$private_file"
+    done
+    shopt -u nullglob
+
+    log "已恢复插件、支付接口、主题和运行目录写入权限：$web_user:$web_group"
+}
+
 clear_cache() {
     if [[ "$DOCKER_MODE" -eq 1 ]]; then
         log "正在重建应用容器……"
@@ -291,6 +342,7 @@ main() {
         fi
     fi
 
+    restore_application_permissions
     run_migration
     clear_cache
 
