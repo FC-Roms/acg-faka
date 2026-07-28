@@ -5,7 +5,6 @@ namespace App\Controller\Admin\Api;
 
 
 use App\Controller\Base\API\Manage;
-use App\Entity\Query\Delete;
 use App\Entity\Query\Get;
 use App\Entity\Query\Save;
 use App\Interceptor\ManageSession;
@@ -15,6 +14,7 @@ use App\Util\Client;
 use App\Util\Date;
 use App\Util\Ini;
 use App\Util\Str;
+use Illuminate\Database\Capsule\Manager as DB;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Kernel\Annotation\Inject;
@@ -30,6 +30,257 @@ class Commodity extends Manage
 {
     #[Inject]
     private Query $query;
+
+    private const BATCH_SETTING_FIELDS = [
+        'api_status',
+        'password_status',
+        'coupon',
+        'inventory_hidden',
+        'recommend',
+        'shared_sync',
+        'shared_amount_sync',
+        'shared_config_sync',
+    ];
+
+    /**
+     * @param mixed $value
+     * @return int[]
+     */
+    private function commodityIds(mixed $value): array
+    {
+        if (is_string($value)) {
+            $value = explode(',', $value);
+        }
+        if (!is_array($value)) {
+            $value = [$value];
+        }
+
+        $ids = [];
+        foreach ($value as $candidate) {
+            if (is_int($candidate)) {
+                $id = $candidate;
+            } elseif (is_string($candidate) && ctype_digit(trim($candidate))) {
+                $id = (int)trim($candidate);
+            } else {
+                throw new JSONException('商品 ID 必须是正整数');
+            }
+            if ($id <= 0) {
+                throw new JSONException('商品 ID 必须是正整数');
+            }
+            $ids[] = $id;
+        }
+        $ids = array_values(array_unique($ids));
+        if (count($ids) > 500) {
+            throw new JSONException('单次最多操作 500 个商品');
+        }
+        return $ids;
+    }
+
+    /**
+     * @param Builder $query
+     * @return array<int, int>
+     */
+    private function groupedCommodityReferenceCounts(Builder $query): array
+    {
+        $rows = $query
+            ->select(['commodity_id'])
+            ->selectRaw('COUNT(*) AS reference_count')
+            ->groupBy('commodity_id')
+            ->get();
+        $counts = [];
+        foreach ($rows as $row) {
+            $commodityId = (int)$row->commodity_id;
+            if ($commodityId > 0) {
+                $counts[$commodityId] = (int)$row->reference_count;
+            }
+        }
+        return $counts;
+    }
+
+    /**
+     * @param int[] $commodityIds
+     * @param array<int, string> $namesById
+     * @param array<string, array<int, int>> $referenceCounts
+     * @return array{deletable_ids:int[], deletable_names:string[], blocked_count:int, blocked_names:string[]}
+     */
+    private function commodityDeletionPlan(array $commodityIds, array $namesById, array $referenceCounts): array
+    {
+        $deletableIds = [];
+        $deletableNames = [];
+        $blockedNames = [];
+        $blockedCount = 0;
+
+        foreach ($commodityIds as $commodityId) {
+            $blocked = false;
+            foreach ($referenceCounts as $counts) {
+                if ((int)($counts[$commodityId] ?? 0) > 0) {
+                    $blocked = true;
+                    break;
+                }
+            }
+            $name = (string)($namesById[$commodityId] ?? "商品 #{$commodityId}");
+            if ($blocked) {
+                $blockedCount++;
+                if (count($blockedNames) < 3) {
+                    $blockedNames[] = $name;
+                }
+                continue;
+            }
+            $deletableIds[] = $commodityId;
+            if (count($deletableNames) < 3) {
+                $deletableNames[] = $name;
+            }
+        }
+
+        return [
+            'deletable_ids' => $deletableIds,
+            'deletable_names' => $deletableNames,
+            'blocked_count' => $blockedCount,
+            'blocked_names' => $blockedNames,
+        ];
+    }
+
+    /**
+     * Resolve every relationship which would be changed or orphaned by a
+     * physical commodity deletion. Historical records are deliberately treated
+     * as blockers; administrators should delist or hide used commodities.
+     *
+     * @param int[] $requestedIds
+     * @param bool $lock
+     * @return array
+     * @throws JSONException
+     */
+    private function commodityDeleteImpact(array $requestedIds, bool $lock = false): array
+    {
+        if ($requestedIds === []) {
+            throw new JSONException('你还没有选择商品');
+        }
+
+        $query = \App\Model\Commodity::query()
+            ->whereIn('id', $requestedIds)
+            ->orderBy('id')
+            ->select(['id', 'name']);
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+        $commodities = $query->get();
+        $commodityIds = $commodities->pluck('id')->map(static fn($id): int => (int)$id)->all();
+        $missingIds = array_values(array_diff($requestedIds, $commodityIds));
+        $namesById = [];
+        foreach ($commodities as $commodity) {
+            $namesById[(int)$commodity->id] = (string)$commodity->name;
+        }
+
+        $cardCounts = [];
+        $soldCardCounts = [];
+        $orderCounts = [];
+        $couponCounts = [];
+        $merchantMappingCounts = [];
+        $ticketCounts = [];
+        $commodityGroupCounts = [];
+        $commodityGroupCount = 0;
+        $commodityGroupNames = [];
+
+        if ($commodityIds !== []) {
+            $cardQuery = \App\Model\Card::query()->whereIn('commodity_id', $commodityIds);
+            $cardCounts = $this->groupedCommodityReferenceCounts(clone $cardQuery);
+            $soldCardCounts = $this->groupedCommodityReferenceCounts(
+                (clone $cardQuery)->where(function (Builder $builder) {
+                    $builder->where('status', 1)->orWhereNotNull('order_id');
+                })
+            );
+            $orderCounts = $this->groupedCommodityReferenceCounts(
+                \App\Model\Order::query()->whereIn('commodity_id', $commodityIds)
+            );
+            $couponCounts = $this->groupedCommodityReferenceCounts(
+                \App\Model\Coupon::query()->whereIn('commodity_id', $commodityIds)
+            );
+            $merchantMappingCounts = $this->groupedCommodityReferenceCounts(
+                \App\Model\UserCommodity::query()->whereIn('commodity_id', $commodityIds)
+            );
+            $ticketCounts = $this->groupedCommodityReferenceCounts(
+                \App\Model\Ticket::query()->whereIn('commodity_id', $commodityIds)
+            );
+
+            // CommodityGroup stores references in JSON and therefore has no
+            // database foreign key. The final delete path locks the complete,
+            // ordered group scan after locking commodities. CommodityGroup::save()
+            // uses the same Commodity -> CommodityGroup order, so a concurrent edit
+            // cannot create an orphan between this scan and the physical deletion.
+            $commodityGroupQuery = \App\Model\CommodityGroup::query()
+                ->orderBy('id')
+                ->select(['id', 'name', 'commodity_list']);
+            if ($lock) {
+                $commodityGroupQuery->lockForUpdate();
+            }
+            $commodityIdLookup = array_fill_keys($commodityIds, true);
+            foreach ($commodityGroupQuery->get() as $commodityGroup) {
+                $references = $commodityGroup->commodity_list;
+                if (!is_array($references)) {
+                    $references = [$references];
+                }
+                $matchedIds = [];
+                foreach ($references as $reference) {
+                    if (is_int($reference)) {
+                        $referenceId = $reference;
+                    } elseif (is_string($reference) && ctype_digit(trim($reference))) {
+                        $referenceId = (int)trim($reference);
+                    } else {
+                        continue;
+                    }
+                    if ($referenceId > 0 && isset($commodityIdLookup[$referenceId])) {
+                        $matchedIds[$referenceId] = true;
+                    }
+                }
+                if ($matchedIds === []) {
+                    continue;
+                }
+                $commodityGroupCount++;
+                if (count($commodityGroupNames) < 3) {
+                    $commodityGroupNames[] = (string)$commodityGroup->name;
+                }
+                foreach (array_keys($matchedIds) as $matchedId) {
+                    $commodityGroupCounts[$matchedId] = (int)($commodityGroupCounts[$matchedId] ?? 0) + 1;
+                }
+            }
+        }
+
+        $plan = $this->commodityDeletionPlan($commodityIds, $namesById, [
+            'cards' => $cardCounts,
+            'orders' => $orderCounts,
+            'coupons' => $couponCounts,
+            'merchant_mappings' => $merchantMappingCounts,
+            'tickets' => $ticketCounts,
+            'commodity_groups' => $commodityGroupCounts,
+        ]);
+        $missingCount = count($missingIds);
+        $deletableCount = count($plan['deletable_ids']);
+        $skippedCount = $plan['blocked_count'] + $missingCount;
+
+        return [
+            'commodity_ids' => $commodityIds,
+            'deletable_ids' => $plan['deletable_ids'],
+            'missing_ids' => $missingIds,
+            'names' => $commodities->pluck('name')->take(3)->values()->all(),
+            'deletable_names' => $plan['deletable_names'],
+            'blocked_names' => $plan['blocked_names'],
+            'requested_count' => count($requestedIds),
+            'commodity_count' => count($commodityIds),
+            'deletable_count' => $deletableCount,
+            'blocked_count' => $plan['blocked_count'],
+            'missing_count' => $missingCount,
+            'skipped_count' => $skippedCount,
+            'card_count' => array_sum($cardCounts),
+            'sold_card_count' => array_sum($soldCardCounts),
+            'order_count' => array_sum($orderCounts),
+            'coupon_count' => array_sum($couponCounts),
+            'merchant_mapping_count' => array_sum($merchantMappingCounts),
+            'ticket_count' => array_sum($ticketCounts),
+            'commodity_group_count' => $commodityGroupCount,
+            'commodity_group_names' => $commodityGroupNames,
+            'can_delete' => $skippedCount === 0,
+        ];
+    }
 
     /**
      * @return array
@@ -124,65 +375,158 @@ class Commodity extends Manage
     {
         \App\Model\Commodity::ensureSoldBaseColumn();
         \App\Model\Commodity::ensureSeckillColumns();
-        $map = $request->post(flags: Filter::NORMAL);
-        $map['sold_base'] = max(0, (int)($map['sold_base'] ?? 0));
-        $map['seckill_status'] = (int)($map['seckill_status'] ?? 0);
-        $map['seckill_expire_action'] = (int)($map['seckill_expire_action'] ?? 0) === 1 ? 1 : 0;
-        $map['seckill_price'] = ($map['seckill_price'] ?? '') === '' ? null : (float)$map['seckill_price'];
+        $raw = $request->post(flags: Filter::NORMAL);
+        $allowed = [
+            'id', 'category_id', 'name', 'description', 'cover', 'factory_price', 'price', 'user_price',
+            'status', 'api_status', 'delivery_way', 'delivery_auto_mode', 'delivery_message', 'contact_type',
+            'password_status', 'sort', 'coupon', 'shared_id', 'shared_code', 'shared_premium',
+            'shared_premium_type', 'sold_base', 'seckill_status', 'seckill_start_time', 'seckill_end_time',
+            'seckill_price', 'seckill_expire_action', 'draft_status',
+            'draft_premium', 'inventory_hidden', 'leave_message', 'recommend', 'send_email', 'only_user',
+            'purchase_count', 'widget', 'level_price', 'level_disable', 'minimum', 'maximum', 'shared_sync',
+            'config', 'hide', 'stock', 'inventory_sync', 'shared_amount_sync', 'shared_config_sync',
+            'pay_intercept',
+            'dock_g_id', 'dock_mode', 'dock_mode_value', 'dock_lucky_decimal', 'dock_sync_price',
+            'dock_sync_content', 'dock_sync_title', 'dock_sync_now',
+            'asyn_request_status', 'asyn_request_type', 'asyn_request_url', 'asyn_request_template',
+        ];
+        $map = array_intersect_key($raw, array_flip($allowed));
+        if (array_key_exists('sold_base', $map)) {
+            $map['sold_base'] = max(0, (int)$map['sold_base']);
+        }
+        if (array_key_exists('seckill_status', $map)) {
+            $map['seckill_status'] = (int)$map['seckill_status'];
+        }
+        if (array_key_exists('seckill_expire_action', $map)) {
+            $map['seckill_expire_action'] = (int)$map['seckill_expire_action'] === 1 ? 1 : 0;
+        }
+        if (array_key_exists('seckill_price', $map)) {
+            $map['seckill_price'] = $map['seckill_price'] === '' ? null : (float)$map['seckill_price'];
+        }
+        $id = isset($map['id']) ? (int)$map['id'] : 0;
+        $current = $id > 0 ? \App\Model\Commodity::query()->find($id) : null;
+        if ($id > 0 && !$current) {
+            throw new JSONException('商品不存在');
+        }
 
-        //create new
-        if ((int)$map['id'] == 0) {
-
-            if (!$map['name']) {
+        // create new
+        if ($id === 0) {
+            if (trim((string)($map['name'] ?? '')) === '') {
                 throw new JSONException("商品名称不能为空哦(｡￫‿￩｡)");
             }
-
-            if ((float)$map['price'] < 0 || (float)$map['user_price'] < 0) {
+            if (!isset($map['category_id']) || (int)$map['category_id'] <= 0) {
+                throw new JSONException('请选择商品分类');
+            }
+            if (!isset($map['price'], $map['user_price']) || (float)$map['price'] < 0 || (float)$map['user_price'] < 0) {
                 throw new JSONException("商品单价不能低于0元哦(｡￫‿￩｡)");
             }
-
-            //--init
-            $map['owner'] = 0;
-            $map['code'] = strtoupper(Str::generateRandStr(16));
+        } elseif (array_key_exists('name', $map) && trim((string)$map['name']) === '') {
+            throw new JSONException('商品名称不能为空');
         }
 
         //如果选择了别人平台
-        if ((int)$map['shared_id'] != 0) {
+        if (array_key_exists('shared_id', $map) && (int)$map['shared_id'] !== 0) {
             $map['delivery_way'] = 0;
-            if (!$map['shared_code']) {
+            if (trim((string)($map['shared_code'] ?? '')) === '') {
                 throw new JSONException("您选择了对接别人店铺，所以要填写商品对接代码哦(｡￫‿￩｡)");
             }
         }
 
-        if ($map['seckill_status'] == 1) {
-            if (!$map['seckill_start_time'] || !$map['seckill_end_time']) {
+        $touchesSeckill = array_key_exists('seckill_status', $map)
+            || array_key_exists('seckill_start_time', $map)
+            || array_key_exists('seckill_end_time', $map)
+            || array_key_exists('seckill_price', $map)
+            || array_key_exists('seckill_expire_action', $map);
+        $seckillStatus = isset($map['seckill_status'])
+            ? (int)$map['seckill_status']
+            : (int)($current?->seckill_status ?? 0);
+        if ($touchesSeckill && $seckillStatus === 1) {
+            $seckillStart = (string)($map['seckill_start_time'] ?? $current?->seckill_start_time ?? '');
+            $seckillEnd = (string)($map['seckill_end_time'] ?? $current?->seckill_end_time ?? '');
+            $seckillPrice = $map['seckill_price'] ?? $current?->seckill_price ?? null;
+            if ($seckillStart === '' || $seckillEnd === '') {
                 throw new JSONException("您开启了秒杀功能，所以请指定秒杀的开始时间和结束时间哦(｡￫‿￩｡)");
             }
-            if ($map['seckill_price'] === null || $map['seckill_price'] < 0) {
+            if ($seckillPrice === null || (float)$seckillPrice < 0) {
                 throw new JSONException("您开启了秒杀功能，请指定有效的秒杀价格");
             }
-            if (strtotime($map['seckill_end_time']) < strtotime($map['seckill_start_time'])) {
+            if (strtotime($seckillEnd) < strtotime($seckillStart)) {
                 throw new JSONException("秒杀结束时间不能低于秒杀开始时间哦，请认真指定秒杀结束时间(｡￫‿￩｡)");
             }
         }
 
-        if ($map['draft_status'] == 1) {
-            if ($map['draft_premium'] === "") {
+        if (isset($map['draft_status']) && (int)$map['draft_status'] === 1) {
+            if (!array_key_exists('draft_premium', $map) || $map['draft_premium'] === "") {
                 throw new JSONException("您开启了预选卡密功能，请填写预选时的溢价(｡￫‿￩｡)");
             }
         }
 
         //解析配置文件
-        if ($map['config']) {
+        if (!empty($map['config'])) {
             Ini::toArray($map['config']);
         }
 
+        foreach (['factory_price', 'price', 'user_price', 'shared_premium', 'draft_premium', 'seckill_price'] as $moneyField) {
+            if (!array_key_exists($moneyField, $map) || $map[$moneyField] === '' || $map[$moneyField] === null) {
+                continue;
+            }
+            $value = filter_var($map[$moneyField], FILTER_VALIDATE_FLOAT);
+            if ($value === false || !is_finite((float)$value) || (float)$value < 0) {
+                throw new JSONException('商品金额必须是大于等于 0 的有效数字');
+            }
+        }
+        if (array_key_exists('stock', $map) && $map['stock'] !== '') {
+            $stock = filter_var($map['stock'], FILTER_VALIDATE_INT, [
+                'options' => ['min_range' => 0, 'max_range' => 2147483647],
+            ]);
+            if ($stock === false) {
+                throw new JSONException('商品库存必须是有效的非负整数');
+            }
+            $map['stock'] = $stock;
+        }
+
         $save = new Save(\App\Model\Commodity::class);
-        $save->setMap($map);
-        $save->addForceMap("config", $map['config'] ?? "");
+        $save->setMap($map, $allowed);
+        if (array_key_exists('config', $map)) {
+            $save->addForceMap('config', $map['config'] ?? '');
+        }
+        if ($id === 0) {
+            $save->addForceMap('owner', 0);
+            $save->addForceMap('code', strtoupper(Str::generateRandStr(16)));
+        } else {
+            $save->disableAddable();
+        }
         $save->enableCreateTime();
-        $save = $this->query->save($save);
-        if (!$save) {
+        $owner = $current ? (int)$current->owner : 0;
+        $saved = DB::transaction(function () use ($save, $map, $id, $owner) {
+            // Category deletion uses the same Category -> Commodity lock order.
+            // Holding the target category row until the commodity write commits
+            // prevents a create/move from racing a physical category deletion.
+            if (array_key_exists('category_id', $map)) {
+                $category = \App\Model\Category::query()
+                    ->where('owner', $owner)
+                    ->where('id', (int)$map['category_id'])
+                    ->lockForUpdate()
+                    ->first();
+                if (!$category) {
+                    throw new JSONException('商品分类不存在或不属于同一创建者');
+                }
+            }
+
+            if ($id > 0) {
+                $lockedCommodity = \App\Model\Commodity::query()
+                    ->where('id', $id)
+                    ->where('owner', $owner)
+                    ->lockForUpdate()
+                    ->first();
+                if (!$lockedCommodity) {
+                    throw new JSONException('商品不存在');
+                }
+            }
+
+            return $this->query->save($save);
+        });
+        if (!$saved) {
             throw new JSONException("保存失败，请检查信息填写是否完整");
         }
 
@@ -197,14 +541,64 @@ class Commodity extends Manage
      */
     public function del(): array
     {
-        $deleteBatchEntity = new Delete(\App\Model\Commodity::class, $_POST['list']);
-        $count = $this->query->delete($deleteBatchEntity);
-        if ($count == 0) {
-            throw new JSONException("没有移除任何数据");
-        }
+        $requestedIds = $this->commodityIds($_POST['list'] ?? []);
+        $impact = DB::transaction(function () use ($requestedIds): array {
+            $impact = $this->commodityDeleteImpact($requestedIds, true);
+            if (count($requestedIds) === 1 && $impact['missing_count'] > 0) {
+                throw new JSONException('商品不存在，请刷新后重试');
+            }
+            if (count($requestedIds) === 1 && $impact['blocked_count'] > 0) {
+                throw new JSONException(
+                    "所选商品已有业务数据，禁止物理删除。关联卡密 {$impact['card_count']} 张、订单 {$impact['order_count']} 笔、优惠券 {$impact['coupon_count']} 张、商户映射 {$impact['merchant_mapping_count']} 条、工单 {$impact['ticket_count']} 条、商品分组 {$impact['commodity_group_count']} 个；请先解除关联，或改为下架/隐藏商品。"
+                );
+            }
 
-        ManageLog::log($this->getManage(), "[删除]商品");
-        return $this->json(200, '（＾∀＾）移除成功');
+            $expectedDeleteCount = $impact['deletable_count'];
+            $deleted = $expectedDeleteCount > 0
+                ? \App\Model\Commodity::query()->whereIn('id', $impact['deletable_ids'])->delete()
+                : 0;
+            if ($deleted !== $expectedDeleteCount) {
+                throw new JSONException('商品删除数量异常，操作已回滚，请刷新后重试');
+            }
+            return $impact;
+        });
+
+        $deletedCount = $impact['deletable_count'];
+        $skippedCount = $impact['skipped_count'];
+        $operation = count($requestedIds) > 1 ? '批量删除' : '删除';
+        ManageLog::log(
+            $this->getManage(),
+            "[{$operation}]商品，成功：{$deletedCount}，跳过：{$skippedCount}"
+        );
+        $message = $skippedCount > 0
+            ? "批量删除完成：成功 {$deletedCount} 个，跳过 {$skippedCount} 个"
+            : '（＾∀＾）移除成功';
+        return $this->json(200, $message, [
+            'count' => $deletedCount,
+            'deleted_count' => $deletedCount,
+            'skipped_count' => $skippedCount,
+            'blocked_count' => $impact['blocked_count'],
+            'missing_count' => $impact['missing_count'],
+            'blocked_names' => $impact['blocked_names'],
+            'card_count' => $impact['card_count'],
+            'order_count' => $impact['order_count'],
+            'coupon_count' => $impact['coupon_count'],
+            'merchant_mapping_count' => $impact['merchant_mapping_count'],
+            'ticket_count' => $impact['ticket_count'],
+            'commodity_group_count' => $impact['commodity_group_count'],
+        ]);
+    }
+
+    /**
+     * Read-only impact preview for the irreversible delete dialog.
+     * @return array
+     * @throws JSONException
+     */
+    public function deleteImpact(): array
+    {
+        $impact = $this->commodityDeleteImpact($this->commodityIds($_POST['list'] ?? []));
+        unset($impact['commodity_ids'], $impact['deletable_ids'], $impact['missing_ids']);
+        return $this->json(data: $impact);
     }
 
     /**
@@ -212,11 +606,15 @@ class Commodity extends Manage
      */
     public function status(): array
     {
-        $list = (array)$_POST['list'];
-        $status = (int)$_POST['status'];
-        \App\Model\Commodity::query()->whereIn('id', $list)->update(['status' => $status]);
-        ManageLog::log($this->getManage(), "[批量更新]商品启停状态");
-        return $this->json(200, '商品状态已经更新');
+        $list = $this->commodityIds($_POST['list'] ?? []);
+        $rawStatus = (string)($_POST['status'] ?? '');
+        if ($list === [] || !in_array($rawStatus, ['0', '1'], true)) {
+            throw new JSONException('商品状态请求参数不正确');
+        }
+        $status = (int)$rawStatus;
+        $count = \App\Model\Commodity::query()->whereIn('id', $list)->update(['status' => $status]);
+        ManageLog::log($this->getManage(), "[批量更新]商品启停状态，共计：{$count}");
+        return $this->json(200, $count > 0 ? '商品状态已经更新' : '商品状态无需更新', ['count' => $count]);
     }
 
 
@@ -225,31 +623,62 @@ class Commodity extends Manage
      */
     public function fastEnable(): array
     {
-        $map = $this->request->post();
-        $list = (array)explode(",", (string)$this->request->post("list"));
-        $sharedSync = $map['shared_sync'] == 0 ? 0 : 1;
-        $sharedAmountSync = $map['shared_amount_sync'] == 0 ? 0 : 1;
-        $sharedConfigSync = $map['shared_config_sync'] == 0 ? 0 : 1;
-
-        unset($map['list'], $map['shared_sync'], $map['shared_amount_sync'], $map['shared_config_sync']);
-
-        foreach ($map as $key => $val) {
-            if ($val == 0) {
-                $map[$key] = 0;
-            } else {
-                $map[$key] = 1;
-            }
+        $raw = $this->request->post();
+        $list = $this->commodityIds($raw['list'] ?? []);
+        if ($list === []) {
+            throw new JSONException('请至少选择一个商品');
         }
 
-        \App\Model\Commodity::query()->whereIn('id', $list)->update($map);
-        \App\Model\Commodity::query()->whereIn('id', $list)->where("shared_id", ">", 0)->update([
-            "shared_sync" => $sharedSync,
-            "shared_amount_sync" => $sharedAmountSync,
-            "shared_config_sync" => $sharedConfigSync
-        ]);
+        $changes = [];
+        foreach (self::BATCH_SETTING_FIELDS as $field) {
+            if (!array_key_exists($field, $raw)) {
+                continue;
+            }
+            $value = (string)$raw[$field];
+            if ($value === '' || $value === '-1' || $value === 'keep') {
+                continue;
+            }
+            if (!in_array($value, ['0', '1'], true)) {
+                throw new JSONException('批量设置参数不正确');
+            }
+            $changes[$field] = (int)$value;
+        }
+        if ($changes === []) {
+            throw new JSONException('你还没有选择任何需要修改的设置');
+        }
 
+        $sharedFields = ['shared_sync', 'shared_amount_sync', 'shared_config_sync'];
+        $sharedChanges = array_intersect_key($changes, array_flip($sharedFields));
+        $baseChanges = array_diff_key($changes, array_flip($sharedFields));
 
-        ManageLog::log($this->getManage(), "[批量更新]商品状态");
-        return $this->json(200, '更新成功');
+        $result = DB::transaction(function () use ($list, $baseChanges, $sharedChanges): array {
+            $selected = \App\Model\Commodity::query()->whereIn('id', $list)->lockForUpdate()->pluck('id');
+            $selectedIds = $selected->map(static fn($id): int => (int)$id)->all();
+            if ($selectedIds === []) {
+                throw new JSONException('所选商品不存在');
+            }
+
+            $baseCount = $baseChanges === []
+                ? 0
+                : \App\Model\Commodity::query()->whereIn('id', $selectedIds)->update($baseChanges);
+            $sharedCount = $sharedChanges === []
+                ? 0
+                : \App\Model\Commodity::query()
+                    ->whereIn('id', $selectedIds)
+                    ->where('shared_id', '>', 0)
+                    ->update($sharedChanges);
+
+            return [
+                'selected_count' => count($selectedIds),
+                'updated_count' => max($baseCount, $sharedCount),
+                'shared_updated_count' => $sharedCount,
+            ];
+        });
+
+        ManageLog::log(
+            $this->getManage(),
+            "[批量设置]商品 {$result['selected_count']} 个，字段：" . implode(',', array_keys($changes))
+        );
+        return $this->json(200, '更新成功', $result);
     }
 }

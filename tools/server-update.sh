@@ -21,7 +21,10 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_ROOT="${UPDATE_BACKUP_DIR:-$(dirname -- "$REPO_DIR")/acg-faka-server-backups}"
 BACKUP_DIR="$BACKUP_ROOT/$STAMP"
 LOCK_DIR="${TMPDIR:-/tmp}/acg-faka-server-update.lock"
-MIGRATION_FILE="$REPO_DIR/kernel/Install/Upgrade-3.5.4-seckill.sql"
+MIGRATION_FILES=(
+    "$REPO_DIR/kernel/Install/Upgrade-3.5.4-to-3.5.6.sql"
+    "$REPO_DIR/kernel/Install/Upgrade-3.5.4-seckill.sql"
+)
 
 STASH_COMMIT=""
 STASH_APPLIED=0
@@ -118,6 +121,7 @@ detect_compose() {
 }
 
 run_direct_migration() {
+    local migration_file="$1"
     local config_file="$REPO_DIR/config/database.php"
     local db_host db_port db_name db_user db_password
 
@@ -137,29 +141,39 @@ run_direct_migration() {
         --host="$db_host" \
         --port="$db_port" \
         --user="$db_user" \
-        "$db_name" < "$MIGRATION_FILE"
+        "$db_name" < "$migration_file"
 }
 
 run_migration() {
+    local migration_file
+
     if [[ "$SKIP_MIGRATION" == "1" ]]; then
         warn "已按 UPDATE_SKIP_MIGRATION=1 跳过数据库迁移。"
         return 0
     fi
 
-    [[ -f "$MIGRATION_FILE" ]] || die "未找到数据库迁移文件：$MIGRATION_FILE"
+    for migration_file in "${MIGRATION_FILES[@]}"; do
+        [[ -f "$migration_file" ]] || die "未找到数据库迁移文件：$migration_file"
+    done
 
     if detect_compose && [[ -n "$("${COMPOSE[@]}" ps -q mysql 2>/dev/null)" ]]; then
         log "检测到 Docker Compose，正在执行数据库迁移……"
-        "${COMPOSE[@]}" exec -T mysql sh -lc \
-            'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < "$MIGRATION_FILE"
+        for migration_file in "${MIGRATION_FILES[@]}"; do
+            log "正在执行迁移：$(basename -- "$migration_file")"
+            "${COMPOSE[@]}" exec -T mysql sh -lc \
+                'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < "$migration_file"
+        done
         DOCKER_MODE=1
         return 0
     fi
 
     log "正在使用服务器 PHP/MySQL 配置执行数据库迁移……"
-    if ! run_direct_migration; then
-        die "无法自动连接数据库。请确认 php、mysql 命令及 config/database.php 配置可用，或临时设置 UPDATE_SKIP_MIGRATION=1。"
-    fi
+    for migration_file in "${MIGRATION_FILES[@]}"; do
+        log "正在执行迁移：$(basename -- "$migration_file")"
+        if ! run_direct_migration "$migration_file"; then
+            die "无法自动连接数据库或执行迁移 $(basename -- "$migration_file")。请确认 php、mysql 命令及 config/database.php 配置可用，或临时设置 UPDATE_SKIP_MIGRATION=1。"
+        fi
+    done
 }
 
 clear_cache() {

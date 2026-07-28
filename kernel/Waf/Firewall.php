@@ -201,6 +201,41 @@ class Firewall
     }
 
     /**
+     * Filter a value that PHP has already decoded from the request body.
+     *
+     * Some payloads, such as card secrets, legitimately contain percent escape
+     * text (for example "%0A") and ampersands. Passing those values through
+     * getCache() would decode them a second time, while passing a bare
+     * ampersand directly to HTMLPurifier would store it as "&amp;".
+     *
+     * @param mixed $input
+     * @return mixed
+     * @throws \HTMLPurifier_Exception
+     * @throws \ReflectionException
+     */
+    public function xssKillerLiteral(mixed $input): mixed
+    {
+        if (is_array($input)) {
+            $cleanedArray = [];
+            foreach ($input as $key => $value) {
+                $cleanedArray[$key] = $this->xssKillerLiteral($value);
+            }
+            return $cleanedArray;
+        }
+        if (!is_string($input)) {
+            return $input;
+        }
+
+        $this->HTMLPurifierInit();
+        // Shield one ampersand layer while HTMLPurifier removes unsafe markup,
+        // then restore exactly that layer. Existing literal entities such as
+        // "&amp;" remain literal text instead of being decoded.
+        $escapedAmpersands = str_replace('&', '&amp;', $input);
+        $cleaned = $this->HTMLPurifier->purify($escapedAmpersands);
+        return str_replace('&amp;', '&', $cleaned);
+    }
+
+    /**
      * @param mixed $input
      * @return mixed
      * @throws RuntimeException
