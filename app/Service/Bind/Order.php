@@ -1548,18 +1548,61 @@ class Order implements \App\Service\Order
      * @param int|null $cardId
      * @param int $userId
      * @param string $widget
+     * @param string $requestNo
+     * @param bool $requireActive
      * @return array
      * @throws JSONException
      * @throws RuntimeException
      * @throws \ReflectionException
      */
-    public function giftOrder(Commodity $commodity, string $race = "", int $num = 1, string $contact = "", string $password = "", ?int $cardId = null, int $userId = 0, string $widget = "[]"): array
+    public function giftOrder(Commodity $commodity, string $race = "", int $num = 1, string $contact = "", string $password = "", ?int $cardId = null, int $userId = 0, string $widget = "[]", string $requestNo = "", bool $requireActive = false): array
     {
-        return DB::transaction(function () use ($race, $widget, $contact, $password, $num, $cardId, $commodity, $userId) {
+        return DB::transaction(function () use ($race, $widget, $contact, $password, $num, $cardId, $commodity, $userId, $requestNo, $requireActive) {
             // Preserve gift-order semantics (including intentional gifts for a
             // stopped item), but serialize creation against physical deletion.
             $lockedCommodity = $this->lockCommodityForOrder($commodity);
             $this->lockLocalDraftCardForOrder($lockedCommodity, (int)$cardId);
+
+            if ($requestNo !== '') {
+                /** @var \App\Model\Order|null $existingOrder */
+                $existingOrder = \App\Model\Order::query()
+                    ->where('request_no', $requestNo)
+                    ->lockForUpdate()
+                    ->first();
+                if ($existingOrder) {
+                    if ((int)$existingOrder->commodity_id !== (int)$lockedCommodity->id
+                        || (int)$existingOrder->user_id !== (int)$lockedCommodity->owner
+                        || (int)$existingOrder->card_num !== $num
+                        || (string)$existingOrder->race !== $race) {
+                        throw new JSONException('外部订单号已用于其他发卡请求');
+                    }
+                    if ((int)$existingOrder->status !== 1) {
+                        throw new JSONException('外部订单正在处理中，请稍后重试');
+                    }
+
+                    return [
+                        "secret" => (string)$existingOrder->secret,
+                        "tradeNo" => $existingOrder->trade_no,
+                        "repeated" => true
+                    ];
+                }
+            }
+
+            if ($requireActive) {
+                if ((int)$lockedCommodity->status !== 1) {
+                    throw new JSONException('当前商品已停售');
+                }
+                if ($num <= 0) {
+                    throw new JSONException('发卡数量必须大于0');
+                }
+
+                /** @var \App\Service\Shop $shopService */
+                $shopService = Di::inst()->make(\App\Service\Shop::class);
+                $stock = (int)$shopService->getItemStock($lockedCommodity, $race ?: null, []);
+                if ($stock < $num) {
+                    throw new JSONException("库存不足，当前可用库存：{$stock}");
+                }
+            }
 
             //创建订单
             $date = Date::current();
@@ -1582,12 +1625,16 @@ class Order implements \App\Service\Order
             $order->rent = 0;
             $order->race = $race;
             $order->user_id = $lockedCommodity->owner;
+            if ($requestNo !== '') {
+                $order->request_no = $requestNo;
+            }
             $order->setRelation('commodity', $lockedCommodity);
             $order->save();
             $secret = $this->orderSuccess($order);
             return [
                 "secret" => $secret,
-                "tradeNo" => $order->trade_no
+                "tradeNo" => $order->trade_no,
+                "repeated" => false
             ];
         });
     }

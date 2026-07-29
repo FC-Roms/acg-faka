@@ -11,6 +11,7 @@ use App\Util\Plugin;
 use App\Util\Str;
 use Illuminate\Database\Capsule\Manager;
 use Illuminate\Database\Schema\Blueprint;
+use Kernel\Annotation\Inject;
 use Kernel\Context\Interface\Request;
 use Kernel\Exception\JSONException;
 use Kernel\Waf\Filter;
@@ -18,6 +19,9 @@ use Kernel\Waf\Filter;
 class Opencard
 {
     private const EXTRACT_RECORD_TABLE = 'api_notification_extract_record';
+
+    #[Inject]
+    private \App\Service\Order $orderService;
 
     private function normalizeHeaderName(string $name): string
     {
@@ -386,6 +390,95 @@ class Opencard
                 "total" => count($cards),
                 "removed" => $removed,
                 "missing" => $missing
+            ]
+        ];
+    }
+
+    /**
+     * 第三方一键发卡。
+     *
+     * 参数兼容 Card-Extract 的 /api/get-card 接口，其中 item_id 为当前
+     * 商户的商品 ID，order_quantity 为发卡数量。
+     */
+    public function getCard(Request $request): array
+    {
+        $appId = $this->getApiHeader($request, "Api-Id");
+        $signature = $this->getApiHeader($request, "Api-Signature");
+
+        if (!$appId || !$signature) {
+            throw new JSONException("缺少API认证信息");
+        }
+
+        $user = User::query()->where("id", (int)$appId)->first();
+        if (!$user || $user->status != 1) {
+            throw new JSONException("无效的商户ID");
+        }
+
+        $postData = $request->post();
+        $expectedSignature = Str::generateSignature($postData, $user->app_key);
+        if (!hash_equals($expectedSignature, $signature)) {
+            throw new JSONException("签名验证失败");
+        }
+
+        $commodityValue = $postData['item_id'] ?? '';
+        if ($commodityValue === '') {
+            $commodityValue = $postData['commodity_id'] ?? 0;
+        }
+        $commodityId = (int)$commodityValue;
+        if ($commodityId <= 0) {
+            throw new JSONException("请提供有效的商品ID");
+        }
+
+        $quantityValue = $postData['order_quantity'] ?? '';
+        if ($quantityValue === '') {
+            $quantityValue = $postData['count'] ?? 1;
+        }
+        $quantity = filter_var($quantityValue, FILTER_VALIDATE_INT);
+        if ($quantity === false || $quantity < 1 || $quantity > 150) {
+            throw new JSONException("发卡数量必须在1-150之间");
+        }
+
+        /** @var Commodity|null $commodity */
+        $commodity = Commodity::query()
+            ->where("owner", $user->id)
+            ->where("id", $commodityId)
+            ->first();
+        if (!$commodity) {
+            throw new JSONException("商品不存在或无权操作");
+        }
+
+        $race = trim((string)($postData['race'] ?? ''));
+        if (mb_strlen($race) > 32) {
+            throw new JSONException("商品分类长度不能超过32个字符");
+        }
+
+        $externalOrderId = trim((string)($postData['order_id'] ?? ''));
+        if (mb_strlen($externalOrderId) > 128) {
+            throw new JSONException("外部订单号长度不能超过128个字符");
+        }
+        $requestNo = $externalOrderId === ''
+            ? ''
+            : substr(sha1("opencard:{$user->id}:{$externalOrderId}"), 0, 19);
+
+        $result = $this->orderService->giftOrder(
+            $commodity,
+            $race,
+            $quantity,
+            requestNo: $requestNo,
+            requireActive: true
+        );
+
+        return [
+            "code" => 200,
+            "success" => true,
+            "msg" => !empty($result['repeated']) ? "该外部订单已发卡" : "发卡成功",
+            "data" => $result['secret'],
+            "meta" => [
+                "trade_no" => $result['tradeNo'],
+                "order_id" => $externalOrderId,
+                "item_id" => $commodityId,
+                "order_quantity" => $quantity,
+                "repeated" => (bool)($result['repeated'] ?? false)
             ]
         ];
     }

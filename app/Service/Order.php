@@ -130,7 +130,9 @@ interface Order
      * @param int|null $cardId
      * @param int $userId
      * @param string $widget
+     * @param string $requestNo
+     * @param bool $requireActive
      * @return array
      */
-    public function giftOrder(Commodity $commodity, string $race = "", int $num = 1, string $contact = "", string $password = "", ?int $cardId = null, int $userId = 0, string $widget = "[]"): array;
+    public function giftOrder(Commodity $commodity, string $race = "", int $num = 1, string $contact = "", string $password = "", ?int $cardId = null, int $userId = 0, string $widget = "[]", string $requestNo = "", bool $requireActive = false): array;
 }
