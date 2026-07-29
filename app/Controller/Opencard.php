@@ -398,8 +398,8 @@ class Opencard
     /**
      * 第三方一键发卡。
      *
-     * 参数兼容 Card-Extract 的 /api/get-card 接口，其中 item_id 为当前
-     * 商户的商品 ID，order_quantity 为发卡数量。
+     * 参数兼容 Card-Extract 的 /api/get-card 接口，其中 item_id 为第三方
+     * 平台商品 ID，commodity_id 为本站商品 ID。
      */
     public function getCard(Request $request): array
     {
@@ -420,13 +420,13 @@ class Opencard
             $postData = [];
         }
 
-        $commodityValue = $postData['item_id'] ?? '';
-        if ($commodityValue === '') {
-            $commodityValue = $postData['commodity_id'] ?? 0;
+        $externalItemId = $postData['item_id'] ?? null;
+        if (!is_scalar($externalItemId) || trim((string)$externalItemId) === '') {
+            throw new JSONException("请提供有效的第三方商品ID（item_id）");
         }
-        $commodityId = (int)$commodityValue;
-        if ($commodityId <= 0) {
-            throw new JSONException("请提供有效的商品ID");
+        $commodityId = filter_var($postData['commodity_id'] ?? null, FILTER_VALIDATE_INT);
+        if ($commodityId === false || $commodityId <= 0) {
+            throw new JSONException("请提供有效的本站商品ID（commodity_id）");
         }
 
         $quantityValue = $postData['order_quantity'] ?? '';
@@ -475,7 +475,8 @@ class Opencard
             "meta" => [
                 "trade_no" => $result['tradeNo'],
                 "order_id" => $externalOrderId,
-                "item_id" => $commodityId,
+                "item_id" => $externalItemId,
+                "commodity_id" => $commodityId,
                 "order_quantity" => $quantity,
                 "repeated" => (bool)($result['repeated'] ?? false)
             ]
