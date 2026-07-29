@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Model\Card as CardModel;
 use App\Model\Commodity;
 use App\Model\User;
+use App\Support\CouponOpenApi;
 use App\Util\Date;
 use App\Util\Plugin;
 use App\Util\Str;
@@ -402,22 +403,21 @@ class Opencard
      */
     public function getCard(Request $request): array
     {
-        $appId = $this->getApiHeader($request, "Api-Id");
-        $signature = $this->getApiHeader($request, "Api-Signature");
-
-        if (!$appId || !$signature) {
-            throw new JSONException("缺少API认证信息");
+        if ($request->method() !== 'POST') {
+            throw new JSONException('仅支持 POST 请求');
         }
 
-        $user = User::query()->where("id", (int)$appId)->first();
-        if (!$user || $user->status != 1) {
-            throw new JSONException("无效的商户ID");
+        $expectedToken = CouponOpenApi::configuredToken();
+        if ($expectedToken === '' || !hash_equals($expectedToken, $this->getBearerToken($request))) {
+            throw new JSONException('接口 Token 错误或未配置');
         }
 
-        $postData = $request->post();
-        $expectedSignature = Str::generateSignature($postData, $user->app_key);
-        if (!hash_equals($expectedSignature, $signature)) {
-            throw new JSONException("签名验证失败");
+        $postData = $request->json(flags: Filter::NORMAL);
+        if (!is_array($postData) || count($postData) === 0) {
+            $postData = $request->post(flags: Filter::NORMAL);
+        }
+        if (!is_array($postData)) {
+            $postData = [];
         }
 
         $commodityValue = $postData['item_id'] ?? '';
@@ -440,11 +440,10 @@ class Opencard
 
         /** @var Commodity|null $commodity */
         $commodity = Commodity::query()
-            ->where("owner", $user->id)
             ->where("id", $commodityId)
             ->first();
         if (!$commodity) {
-            throw new JSONException("商品不存在或无权操作");
+            throw new JSONException("商品不存在");
         }
 
         $race = trim((string)($postData['race'] ?? ''));
@@ -458,7 +457,7 @@ class Opencard
         }
         $requestNo = $externalOrderId === ''
             ? ''
-            : substr(sha1("opencard:{$user->id}:{$externalOrderId}"), 0, 19);
+            : substr(sha1("opencard:{$externalOrderId}"), 0, 19);
 
         $result = $this->orderService->giftOrder(
             $commodity,
