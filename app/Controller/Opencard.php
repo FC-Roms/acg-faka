@@ -403,6 +403,19 @@ class Opencard
      */
     public function getCard(Request $request): array
     {
+        try {
+            return $this->issueCard($request);
+        } catch (\Throwable $e) {
+            http_response_code($e instanceof JSONException ? 400 : 500);
+            return [
+                "success" => false,
+                "message" => $e instanceof JSONException ? $e->getMessage() : "一键发货失败"
+            ];
+        }
+    }
+
+    private function issueCard(Request $request): array
+    {
         if ($request->method() !== 'POST') {
             throw new JSONException('仅支持 POST 请求');
         }
@@ -468,18 +481,8 @@ class Opencard
         );
 
         return [
-            "code" => 200,
             "success" => true,
-            "msg" => !empty($result['repeated']) ? "该外部订单已发卡" : "发卡成功",
-            "data" => $result['secret'],
-            "meta" => [
-                "trade_no" => $result['tradeNo'],
-                "order_id" => $externalOrderId,
-                "item_id" => $externalItemId,
-                "commodity_id" => $commodityId,
-                "order_quantity" => $quantity,
-                "repeated" => (bool)($result['repeated'] ?? false)
-            ]
+            "data" => "这是您的卡密：" . (string)$result['secret']
         ];
     }
 
